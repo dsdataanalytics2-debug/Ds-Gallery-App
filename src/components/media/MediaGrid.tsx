@@ -68,16 +68,27 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
 
   const handleDownload = async (item: Media) => {
     try {
-      const response = await fetch(item.cdnUrl);
+      const token = localStorage.getItem("token");
+      // Hit our tracking endpoint first
+      const trackRes = await fetch(`/api/media/${item.id}/download`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!trackRes.ok) throw new Error("Tracking failed");
+      const { url } = await trackRes.json();
+
+      const response = await fetch(url);
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       link.download = item.fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error("Download failed:", error);
     }

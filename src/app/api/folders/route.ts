@@ -10,17 +10,6 @@ export async function GET(request: Request) {
         _count: {
           select: { media: true },
         },
-        media: {
-          select: {
-            id: true,
-            fileName: true,
-            fileType: true,
-            thumbnailUrl: true,
-            cdnUrl: true,
-          },
-          // Removed take: 4 to fetch all media for accurate stats counting
-          // Limited fields keep the payload size reasonable
-        },
       },
       orderBy: { createdAt: "desc" },
     });

@@ -9,10 +9,13 @@ import {
   Library,
   BarChart3,
   Settings,
+  History,
   ChevronLeft,
   ChevronRight,
   Sparkles,
   LogOut,
+  Users,
+  ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,10 +27,22 @@ const menuItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
+const adminItems = [
+  { icon: Users, label: "User Management", href: "/admin/users" },
+  { icon: History, label: "Activity History", href: "/admin/history" },
+  { icon: ShieldAlert, label: "System Roles", href: "/admin/roles" },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Get user from localStorage safely
+  const userStr =
+    typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isAdmin = user?.role === "admin";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -57,37 +72,35 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
+      <nav className="flex-1 py-6 px-3 space-y-6 overflow-y-auto">
+        <div className="space-y-1">
+          {menuItems.map((item) => (
+            <MenuItem
               key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
-                isActive
-                  ? "bg-indigo-500/10 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-white/5",
-              )}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-full" />
-              )}
-              <item.icon
-                className={cn(
-                  "w-5 h-5 shrink-0 transition-colors",
-                  isActive ? "text-indigo-400" : "group-hover:text-white",
-                )}
+              item={item}
+              isActive={pathname === item.href}
+              isCollapsed={isCollapsed}
+            />
+          ))}
+        </div>
+
+        {isAdmin && (
+          <div className="space-y-1.5">
+            {!isCollapsed && (
+              <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                Administration
+              </p>
+            )}
+            {adminItems.map((item) => (
+              <MenuItem
+                key={item.href}
+                item={item}
+                isActive={pathname === item.href}
+                isCollapsed={isCollapsed}
               />
-              {!isCollapsed && (
-                <span className={cn("font-medium", isActive && "font-bold")}>
-                  {item.label}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </nav>
 
       {/* Footer / Collapse Toggle */}
@@ -118,5 +131,42 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+function MenuItem({
+  item,
+  isActive,
+  isCollapsed,
+}: {
+  item: any;
+  isActive: boolean;
+  isCollapsed: boolean;
+}) {
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
+        isActive
+          ? "bg-indigo-500/10 text-white"
+          : "text-slate-400 hover:text-white hover:bg-white/5",
+      )}
+    >
+      {isActive && (
+        <div className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-full" />
+      )}
+      <item.icon
+        className={cn(
+          "w-5 h-5 shrink-0 transition-colors",
+          isActive ? "text-indigo-400" : "group-hover:text-white",
+        )}
+      />
+      {!isCollapsed && (
+        <span className={cn("font-medium", isActive && "font-bold")}>
+          {item.label}
+        </span>
+      )}
+    </Link>
   );
 }

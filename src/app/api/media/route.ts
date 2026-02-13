@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyAuth, unauthorizedResponse } from "@/lib/auth";
+import {
+  verifyAuth,
+  unauthorizedResponse,
+  getAuthenticatedUser,
+} from "@/lib/auth";
+import { logActivity } from "@/lib/audit";
 import fs from "fs";
 import path from "path";
 
@@ -48,6 +53,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   if (!verifyAuth(request)) return unauthorizedResponse();
+  const sessionUser = getAuthenticatedUser(request);
   try {
     const body = await request.json();
 
@@ -86,6 +92,20 @@ export async function POST(request: Request) {
           metadata: body.metadata || {},
         },
       });
+
+      // Log the activity
+      if (sessionUser) {
+        await logActivity({
+          userId: sessionUser.id,
+          userName: sessionUser.name,
+          action: "UPLOAD",
+          mediaId: media.id,
+          mediaName: media.fileName,
+          fileType: media.fileType,
+          folderId: folder.id,
+          folderName: folder.name,
+        });
+      }
 
       return NextResponse.json(media);
     } catch (prismaError: any) {

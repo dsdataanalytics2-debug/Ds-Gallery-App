@@ -13,14 +13,29 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const hasToken = !!token;
+    const storedUser = localStorage.getItem("user");
 
-    setIsAuthenticated(hasToken);
-
-    if (!hasToken && pathname !== "/login") {
+    if (!token && pathname !== "/login") {
       router.push("/login");
-    } else if (hasToken && pathname === "/login") {
+    } else if (token && pathname === "/login") {
       router.push("/");
+    } else if (token && storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+
+        // Role check for admin routes
+        if (pathname.startsWith("/admin") && user.role !== "admin") {
+          router.push("/");
+        } else {
+          setIsAuthenticated(true);
+        }
+      } catch (e) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
+      }
+    } else if (token && !storedUser && pathname !== "/login") {
+      setIsAuthenticated(true); // Basic fallback if user object is missing but token exists
     }
   }, [pathname, router]);
 

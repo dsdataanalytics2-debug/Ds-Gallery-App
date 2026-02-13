@@ -85,33 +85,49 @@ export default function Home() {
     }
   };
 
-  // Calculate statistics from folders
+  // Calculate statistics from folders efficiently
   const totalFolders = folders.length;
-
-  let totalImages = 0;
-  let totalVideos = 0;
   let totalMedia = 0;
 
-  // Calculate statistics from actual media items with fallback
   folders.forEach((folder) => {
-    // Check if we have the media array (which API now provides)
-    if (folder.media && Array.isArray(folder.media)) {
-      // Calculate from actual items
-      folder.media.forEach((item) => {
-        if (item.fileType === "image") totalImages++;
-        else if (item.fileType === "video") totalVideos++;
-      });
-      totalMedia += folder.media.length;
-    } else if (folder._count?.media) {
-      // Fallback to _count if media array is missing
-      totalMedia += folder._count.media;
-    }
+    totalMedia += folder._count?.media || 0;
   });
 
-  // If we have accurate counts, ensure total matches sum
-  if (totalImages + totalVideos > 0) {
-    totalMedia = totalImages + totalVideos;
-  }
+  // For type-specific counts, we'll rely on the analytics API which is more accurate
+  // We'll initialize them with 0 and they will be updated if we decide to fetch more detailed stats
+  // or use the summary from the analytics endpoint.
+  const [stats, setStats] = useState({
+    images: 0,
+    videos: 0,
+    total: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/analytics", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats({
+            images: data.summary?.imageCount || 0,
+            videos: data.summary?.videoCount || 0,
+            total: data.summary?.totalMedia || 0,
+          });
+        }
+      } catch (e) {
+        console.error("Dashboard: Failed to fetch analytics stats", e);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const totalImages = stats.images;
+  const totalVideos = stats.videos;
+  // If analytics failed, fallback to folder summation for totalMedia
+  const displayTotalMedia = stats.total || totalMedia;
 
   return (
     <div className="space-y-10">
@@ -147,7 +163,7 @@ export default function Home() {
         {[
           {
             label: "Total Assets",
-            value: totalMedia,
+            value: displayTotalMedia,
             icon: Library,
             color: "text-indigo-400",
             bg: "bg-indigo-400/10",
