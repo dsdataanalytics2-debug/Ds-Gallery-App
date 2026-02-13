@@ -21,9 +21,10 @@ import { Media } from "@/types";
 
 interface MediaGridProps {
   media: Media[];
+  onItemClick?: (item: Media) => void;
 }
 
-export default function MediaGrid({ media }: MediaGridProps) {
+export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
   const router = useRouter();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Media | null>(null);
@@ -42,8 +43,12 @@ export default function MediaGrid({ media }: MediaGridProps) {
     setIsDeleting(true);
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`/api/media/${itemToDelete}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -80,22 +85,16 @@ export default function MediaGrid({ media }: MediaGridProps) {
 
   if (media.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 px-4 text-center">
-        <div className="relative mb-8">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-2xl opacity-20 animate-pulse"></div>
-          <div className="relative bg-white p-6 rounded-3xl shadow-xl shadow-purple-500/10 border border-white/50">
-            <ImageIcon className="h-12 w-12 text-purple-500" />
-            <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2 rounded-xl shadow-lg">
-              <Video className="h-5 w-5" />
-            </div>
-          </div>
+      <div className="flex flex-col items-center justify-center py-24 px-4 text-center border-2 border-dashed border-border rounded-3xl bg-slate-900/50">
+        <div className="p-5 rounded-2xl bg-slate-800 text-slate-500 mb-6">
+          <ImageIcon className="h-10 w-10" />
         </div>
-        <h3 className="text-2xl font-black text-slate-800 mb-3 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
-          No media files found
+        <h3 className="text-xl font-bold text-white mb-2">
+          No media assets found
         </h3>
-        <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
-          Upload your high-quality images and videos to start building your
-          gallery.
+        <p className="text-slate-500 max-w-sm mx-auto text-sm">
+          Try adjusting your filters or search query to find the assets you're
+          looking for.
         </p>
       </div>
     );
@@ -103,7 +102,7 @@ export default function MediaGrid({ media }: MediaGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
         {media.map((item) => (
           <div
             key={item.id}
@@ -112,10 +111,11 @@ export default function MediaGrid({ media }: MediaGridProps) {
               setHoveredId(null);
               setOpenMenuId(null);
             }}
-            className="group relative flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 hover:-translate-y-2 border border-slate-100"
+            onClick={() => onItemClick?.(item)}
+            className="group relative flex flex-col bg-card rounded-2xl overflow-hidden border border-border hover:border-indigo-500/50 transition-all duration-300 shadow-sm hover:shadow-indigo-500/10 cursor-pointer"
           >
-            {/* Image/Video Container */}
-            <div className="relative aspect-[4/5] overflow-hidden bg-slate-100 cursor-pointer">
+            {/* Content Preview */}
+            <div className="relative aspect-[4/5] overflow-hidden bg-slate-900 border-b border-white/5">
               {item.fileType === "image" ? (
                 <img
                   src={item.thumbnailUrl || item.cdnUrl}
@@ -124,25 +124,44 @@ export default function MediaGrid({ media }: MediaGridProps) {
                   loading="lazy"
                 />
               ) : (
-                <div
-                  className="w-full h-full relative"
-                  onClick={() => setSelectedVideo(item)}
-                >
-                  <img
-                    src={item.thumbnailUrl || "/video-placeholder.png"}
-                    alt={item.fileName}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                    <div className="w-14 h-14 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/40 shadow-xl group-hover:scale-110 transition-transform duration-300">
-                      <Play className="h-6 w-6 text-white fill-white ml-1" />
-                    </div>
-                  </div>
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md border border-white/10">
-                    <span className="text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <div className="w-full h-full relative">
+                  {hoveredId === item.id ? (
+                    <video
+                      src={item.cdnUrl}
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover animate-in fade-in duration-500"
+                    />
+                  ) : (
+                    <img
+                      src={item.thumbnailUrl || "/video-placeholder.png"}
+                      alt={item.fileName}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  )}
+
+                  {/* Video-Specific Elements */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-600 text-[10px] font-black uppercase tracking-tighter text-white shadow-lg border border-indigo-400/30">
                       <Video className="h-3 w-3" />
                       Video
                     </span>
+                  </div>
+
+                  {item.metadata?.duration && (
+                    <div className="absolute bottom-2 right-2 z-10">
+                      <span className="px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[10px] font-bold border border-white/10">
+                        {item.metadata.duration}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                    <div className="w-14 h-14 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 group-hover:scale-110 group-hover:bg-indigo-500/20 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
+                      <Play className="h-6 w-6 text-white fill-white group-hover:text-indigo-400 group-hover:fill-indigo-400 transition-colors" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -249,27 +268,19 @@ export default function MediaGrid({ media }: MediaGridProps) {
               </div>
             </div>
 
-            {/* Info Footer */}
-            <div className="p-4 bg-white relative z-10">
+            {/* Card Footer */}
+            <div className="p-3 bg-card relative z-10 border-t border-border">
               <div className="flex items-start justify-between gap-2 mb-1">
-                <h4
-                  className="font-bold text-slate-800 text-sm truncate leading-snug group-hover:text-purple-600 transition-colors"
-                  title={item.fileName}
-                >
+                <h4 className="font-bold text-white text-xs truncate leading-snug group-hover:text-indigo-400 transition-colors">
                   {item.fileName}
                 </h4>
-                {item.folder && (
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                    {item.folder.name}
-                  </span>
-                )}
               </div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                  <FileIcon className="h-3 w-3" />
-                  <span>{(item.fileSize / (1024 * 1024)).toFixed(1)} MB</span>
-                </div>
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                <span className="text-[10px] font-bold text-slate-500 uppercase">
+                  {(item.fileSize / (1024 * 1024)).toFixed(1)} MB •{" "}
+                  {item.fileFormat}
+                </span>
+                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500"></div>
               </div>
             </div>
           </div>

@@ -1,93 +1,17 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: "Inter", "Outfit", ui-sans-serif, system-ui, sans-serif;
-
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-
-  --color-primary-600: #2563eb;
-  --color-primary-500: #3b82f6;
-  --color-primary-400: #60a5fa;
-
-  --color-accent-600: #7c3aed;
-  --color-accent-500: #8b5cf6;
-  --color-accent-400: #a78bfa;
-}
-
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-
-  --secondary: #f1f5f9;
-  --secondary-foreground: #1e293b;
-
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-
-  --accent: #8b5cf6;
-  --accent-foreground: #ffffff;
-
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #3b82f6;
-
-  --radius: 0.75rem;
-}
-
-.dark {
   --background: #020617;
   --foreground: #f8fafc;
 
-  --card: #0f172a;
+  --sidebar: #0b1120;
+  --card: #111827;
   --card-foreground: #f8fafc;
 
-  --popover: #0f172a;
+  --popover: #111827;
   --popover-foreground: #f8fafc;
 
-  --primary: #3b82f6;
+  --primary: #6366f1;
   --primary-foreground: #ffffff;
 
   --secondary: #1e293b;
@@ -96,79 +20,157 @@
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
 
-  --accent: #8b5cf6;
+  --accent: #a855f7;
   --accent-foreground: #ffffff;
 
-  --destructive: #7f1d1d;
-  --destructive-foreground: #f8fafc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
-  --border: #1e293b;
+  --border: rgba(255, 255, 255, 0.1);
   --input: #1e293b;
-  --ring: #3b82f6;
+  --ring: #6366f1;
+
+  --radius: 0.75rem;
+
+  /* Tailwind v4 Theme Variables */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar: var(--sidebar);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+}
+
+:root {
+  --background: #020617;
+  --foreground: #f8fafc;
+
+  --sidebar: #0b1120;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #a855f7;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: #1e293b;
+  --ring: #6366f1;
+
+  --radius: 0.75rem;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    outline-color: rgba(99, 102, 241, 0.5); /* ring color */
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-@utility glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-
-  .dark & {
-    background: rgba(15, 23, 42, 0.7);
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
+
+  .sidebar-link-active {
+    background-color: rgba(99, 102, 241, 0.1);
+    color: white;
+    border-left-width: 2px;
+    border-left-color: #6366f1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #1e293b; /* slate-800 */
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #334155; /* slate-700 */
+  }
 }
 
-@utility glass-morphism {
-  @apply glass rounded-2xl shadow-xl;
+/* Base style for spacing and typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
-@utility text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-500;
+.layout-container {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-height: 100vh;
 }
 
-@utility bg-mesh {
-  background-color: var(--background);
-  background-image:
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+.main-content {
+  display: flex;
+  flex-direction: column;
 }
 
-/* Custom Animations */
-@keyframes blob {
+@media (max-width: 768px) {
+  .layout-container {
+    grid-template-columns: 1fr;
+  }
+}
+/* Video Playback UX Animations */
+@keyframes video-pulse {
   0% {
-    transform: translate(0px, 0px) scale(1);
+    transform: scale(1);
+    opacity: 0.8;
   }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
   }
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: scale(1);
+    opacity: 0.8;
   }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
+.video-glow {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
+.hover-grow {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.animation-delay-4000 {
-  animation-delay: 4s;
+.group:hover .hover-grow {
+  transform: scale(1.02);
 }

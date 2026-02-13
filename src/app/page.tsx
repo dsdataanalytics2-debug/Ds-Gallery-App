@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
+  LayoutDashboard,
   LayoutGrid,
   List,
   Sparkles,
@@ -13,31 +14,62 @@ import {
   Plus,
   Video,
   Upload,
+  ArrowUpRight,
+  Clock,
+  Library,
 } from "lucide-react";
 import CreateFolderModal from "@/components/folders/CreateFolderModal";
 import UploadModal from "@/components/media/UploadModal";
 import FolderCard from "@/components/folders/FolderCard";
-import { Folder } from "@/types";
+import { Folder, Media } from "@/types";
+import { formatTimeAgo } from "@/lib/utils";
 
 export default function Home() {
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [recentMedia, setRecentMedia] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   useEffect(() => {
     fetchFolders();
+    fetchRecentMedia();
   }, []);
 
   const fetchFolders = async () => {
     try {
-      const response = await fetch("/api/folders");
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/folders", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
-      setFolders(data);
+      if (Array.isArray(data)) {
+        setFolders(data);
+      }
     } catch (error) {
       console.error("Failed to fetch folders:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentMedia = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/media", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        // Just take the first 5 for the sidebar
+        setRecentMedia(data.slice(0, 5));
+      }
+    } catch (error) {
+      console.error("Failed to fetch recent media:", error);
     }
   };
 
@@ -70,179 +102,204 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl relative z-10">
-        {/* Hero Section - Premium Design */}
-        <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
-
-          <div className="p-8 md:p-12 relative z-10">
-            <div className="flex items-start justify-between mb-8">
-              <div className="space-y-4 flex-1">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-blue-500/30">
-                  <Sparkles className="h-4 w-4" />
-                  <span>Premium Media Gallery</span>
-                </div>
-                <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 tracking-tight leading-tight">
-                  Product Assets
-                </h1>
-                <p className="text-xl text-slate-700 max-w-2xl font-medium leading-relaxed">
-                  Organize, manage, and showcase your product media with a
-                  powerful, beautifully designed gallery system.
-                </p>
-              </div>
-            </div>
-
-            {/* Stats Cards - Modern Glassmorphism */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-              <div className="group relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm shadow-lg">
-                      <FolderIcon className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="text-4xl font-black text-white mb-1">
-                    {totalFolders}
-                  </div>
-                  <p className="text-sm font-semibold text-blue-100 uppercase tracking-wider">
-                    Folders
-                  </p>
-                </div>
-              </div>
-
-              <div className="group relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm shadow-lg">
-                      <ImageIcon className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="text-4xl font-black text-white mb-1">
-                    {totalImages}
-                  </div>
-                  <p className="text-sm font-semibold text-emerald-100 uppercase tracking-wider">
-                    Images
-                  </p>
-                </div>
-              </div>
-
-              <div className="group relative bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm shadow-lg">
-                      <Film className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="text-4xl font-black text-white mb-1">
-                    {totalVideos}
-                  </div>
-                  <p className="text-sm font-semibold text-purple-100 uppercase tracking-wider">
-                    Videos
-                  </p>
-                </div>
-              </div>
-
-              <div className="group relative bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm shadow-lg">
-                      <Sparkles className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="text-4xl font-black text-white mb-1">
-                    {totalMedia}
-                  </div>
-                  <p className="text-sm font-semibold text-orange-100 uppercase tracking-wider">
-                    Total Assets
-                  </p>
-                </div>
-              </div>
-            </div>
+    <div className="space-y-10">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Premium Media Management</span>
           </div>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            Dashboard
+          </h1>
+          <p className="text-slate-400 max-w-xl">
+            Welcome back. Here's an overview of your digital assets and recent
+            activity.
+          </p>
         </div>
 
-        {/* Collections Grid */}
-        <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Upload className="h-4 w-4" />
+            <span>Upload Media</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Grid - Professional SaaS Design */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            label: "Total Assets",
+            value: totalMedia,
+            icon: Library,
+            color: "text-indigo-400",
+            bg: "bg-indigo-400/10",
+            trend: "+12% this week",
+          },
+          {
+            label: "Images",
+            value: totalImages,
+            icon: ImageIcon,
+            color: "text-emerald-400",
+            bg: "bg-emerald-400/10",
+            trend: "+5% this week",
+          },
+          {
+            label: "Videos",
+            value: totalVideos,
+            icon: Film,
+            color: "text-purple-400",
+            bg: "bg-purple-400/10",
+            trend: "+2% this week",
+          },
+          {
+            label: "Collections",
+            value: totalFolders,
+            icon: FolderIcon,
+            color: "text-amber-400",
+            bg: "bg-amber-400/10",
+            trend: "0% this week",
+          },
+        ].map((stat, i) => (
+          <div
+            key={i}
+            className="group p-6 rounded-2xl bg-card border border-border hover:border-indigo-500/50 transition-all duration-300 shadow-sm hover:shadow-indigo-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                {stat.label}
+              </span>
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <div className="text-3xl font-bold text-white mb-1">
+                  {stat.value}
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                  <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                  <span>{stat.trend}</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-500 rounded-full w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Content Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+        {/* Collections Overview */}
+        <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">Collections</h2>
-              <p className="text-sm text-slate-500 mt-1">
-                Your organized product folders
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Upload Button */}
-              <button
-                onClick={() => setIsUploadModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 transition-all"
-              >
-                <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">Upload Media</span>
-              </button>
-
-              <div className="hidden md:flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
-                <button className="px-4 py-2 rounded-md bg-slate-100 text-slate-900 text-xs font-semibold">
-                  All
-                </button>
-                <button className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-colors">
-                  Recent
-                </button>
-              </div>
-              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
-                <button className="p-2 rounded-md bg-blue-500 text-white shadow-sm">
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
-                <button className="p-2 rounded-md text-slate-400 hover:bg-slate-50 transition-colors">
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <FolderIcon className="h-5 w-5 text-indigo-400" />
+              Recent Collections
+            </h2>
+            <Link
+              href="/folders"
+              className="text-sm font-bold text-indigo-400 hover:text-indigo-300"
+            >
+              View All
+            </Link>
           </div>
 
           {!folders || folders.length === 0 ? (
-            <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-16 flex flex-col items-center justify-center text-center">
-              <div className="p-6 rounded-2xl bg-blue-50 text-blue-500 mb-6">
-                <FolderPlus className="h-12 w-12" />
+            <div className="bg-card/30 rounded-3xl border border-dashed border-border p-12 flex flex-col items-center justify-center text-center">
+              <div className="p-4 rounded-xl bg-slate-800/50 text-slate-400 mb-4">
+                <FolderPlus className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                No folders yet
+              <h3 className="text-lg font-bold text-white mb-2">
+                No collections yet
               </h3>
-              <p className="text-slate-500 mb-8 max-w-sm">
-                Create your first folder to start organizing your product media
-                assets.
+              <p className="text-slate-500 mb-6 max-w-xs text-sm">
+                Create your first collection to start organizing your product
+                media assets.
               </p>
-              <button className="px-8 py-3 bg-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition-colors">
-                Create Folder
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white border border-border rounded-xl font-bold transition-all"
+              >
+                Create Collection
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {folders.map((folder) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {folders.slice(0, 4).map((folder) => (
                 <FolderCard key={folder.id} folder={folder} />
               ))}
             </div>
           )}
         </div>
+
+        {/* Recent Activity Sidebar */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Clock className="h-5 w-5 text-indigo-400" />
+            Recent Uploads
+          </h2>
+          <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border">
+            {recentMedia.length > 0 ? (
+              recentMedia.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 hover:bg-white/5 transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden group-hover:ring-2 group-hover:ring-indigo-500/50 transition-all">
+                      {item.thumbnailUrl ? (
+                        <img
+                          src={item.thumbnailUrl}
+                          alt={item.fileName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-slate-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">
+                        {item.fileName}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {formatTimeAgo(item.createdAt)} •{" "}
+                        {(item.fileSize / (1024 * 1024)).toFixed(1)} MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-sm text-slate-500">No recent uploads</p>
+              </div>
+            )}
+            <Link
+              href="/media"
+              className="w-full block p-4 text-center text-sm font-bold text-indigo-400 hover:bg-white/5 transition-colors border-t border-border"
+            >
+              View Media Library
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Upload Modal */}
       <UploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
+      />
+      <CreateFolderModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </div>
   );

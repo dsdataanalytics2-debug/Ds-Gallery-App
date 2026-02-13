@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onFolderCreated?: () => void;
 }
 
 export default function CreateFolderModal({
   isOpen,
   onClose,
+  onFolderCreated,
 }: CreateFolderModalProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,9 +31,13 @@ export default function CreateFolderModal({
     setIsSubmitting(true);
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch("/api/folders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           ...formData,
           tags: formData.tags
@@ -49,6 +55,7 @@ export default function CreateFolderModal({
           productCategory: "",
           tags: "",
         });
+        if (onFolderCreated) onFolderCreated();
         router.refresh();
       }
     } catch (error) {
@@ -59,10 +66,10 @@ export default function CreateFolderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-background border rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-bold">Create New Folder</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-white">Create Collection</h2>
           <button
             onClick={onClose}
             className="p-1 rounded-md hover:bg-muted transition-colors"
@@ -71,28 +78,32 @@ export default function CreateFolderModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Folder Name *</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Collection Name *
+            </label>
             <input
               required
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder="e.g. Summer Collection 2026"
-              className="w-full bg-muted border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary/50"
+              placeholder="e.g. Summer Assets 2026"
+              className="w-full bg-slate-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Category</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Category
+            </label>
             <select
               value={formData.productCategory}
               onChange={(e) =>
                 setFormData({ ...formData, productCategory: e.target.value })
               }
-              className="w-full bg-muted border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary/50 cursor-pointer"
+              className="w-full bg-slate-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer"
             >
               <option value="">Select a category</option>
               <option value="NatureCure">NatureCure</option>
@@ -102,19 +113,21 @@ export default function CreateFolderModal({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Description
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="What's inside this folder?"
-              className="w-full bg-muted border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary/50 min-h-[100px] resize-none"
+              placeholder="Brief description of this collection..."
+              className="w-full bg-slate-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all min-h-[100px] resize-none"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Tags (comma separated)
             </label>
             <input
@@ -122,8 +135,8 @@ export default function CreateFolderModal({
               onChange={(e) =>
                 setFormData({ ...formData, tags: e.target.value })
               }
-              placeholder="e.g. marketing, web, high-res"
-              className="w-full bg-muted border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary/50"
+              placeholder="e.g. social, ads, high-res"
+              className="w-full bg-slate-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
             />
           </div>
 

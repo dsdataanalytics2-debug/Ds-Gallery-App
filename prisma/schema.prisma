@@ -18,19 +18,29 @@ model Folder {
 }
 
 model Media {
-  id           String   @id @default(cuid())
-  folderId     String
-  folder       Folder   @relation(fields: [folderId], references: [id])
-  fileName     String
-  fileType     String   // "image" or "video"
-  fileFormat   String
-  fileSize     Int
-  storagePath  String
-  cdnUrl       String
-  thumbnailUrl String?
-  tags         String[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  folderId          String
+  fileName          String
+  fileType          String
+  fileFormat        String
+  fileSize          Int
+  storagePath       String
+  cdnUrl            String
+  thumbnailUrl      String?
+  tags              String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  metadata          Json?
+  isCustomThumbnail Boolean  @default(false)
+  folder            Folder   @relation(fields: [folderId], references: [id])
+}
 
-  metadata     Json?    // For width, height, duration
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -12,12 +12,39 @@ import {
 } from "lucide-react";
 import { Media } from "@/types";
 import MediaGrid from "@/components/media/MediaGrid";
+import FilterPanel from "@/components/media/FilterPanel";
+import MediaPreviewDrawer from "@/components/media/MediaPreviewDrawer";
+import { Sparkles } from "lucide-react";
 
 export default function AllMediaPage() {
   const [media, setMedia] = useState<Media[]>([]);
+  const [counts, setCounts] = useState({ all: 0, images: 0, videos: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
+  const [activeCollections, setActiveCollections] = useState<string[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<Media | null>(null);
+
+  const fetchGlobalStats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/analytics", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCounts({
+          all: data.summary.totalMedia,
+          images: data.summary.imageCount,
+          videos: data.summary.videoCount,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch global stats:", error);
+    }
+  };
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -25,8 +52,15 @@ export default function AllMediaPage() {
       const params = new URLSearchParams();
       if (searchQuery) params.append("q", searchQuery);
       if (filter !== "all") params.append("type", filter);
+      if (activeCollections.length > 0)
+        params.append("folderIds", activeCollections.join(","));
 
-      const res = await fetch(`/api/media?${params.toString()}`);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/media?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setMedia(data);
@@ -39,73 +73,101 @@ export default function AllMediaPage() {
   };
 
   useEffect(() => {
+    fetchGlobalStats();
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchMedia();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, filter]);
+  }, [searchQuery, filter, activeCollections]);
+
+  const handleCollectionToggle = (collectionId: string) => {
+    setActiveCollections((prev) =>
+      prev.includes(collectionId)
+        ? prev.filter((id) => id !== collectionId)
+        : [...prev, collectionId],
+    );
+  };
 
   return (
-    <div className="space-y-10 pb-20">
-      <div className="space-y-4">
-        <h1 className="text-5xl font-black tracking-tighter">Media Library</h1>
-        <p className="text-xl text-muted-foreground font-medium">
-          Search and discover assets from across all your product collections.
+    <div className="h-full flex flex-col gap-8">
+      {/* Page Header */}
+      <div className="flex flex-col gap-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-bold border border-indigo-500/20 w-fit">
+          <Sparkles className="h-3 w-3" />
+          <span>Centralized Asset Intelligence</span>
+        </div>
+        <h1 className="text-4xl font-bold tracking-tight text-white">
+          Media Library
+        </h1>
+        <p className="text-slate-400 text-sm max-w-2xl">
+          Search, filter, and manage all your digital assets across collections
+          in one unified workspace.
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by filename or tags..."
-            className="w-full h-14 bg-card border rounded-2xl pl-12 pr-4 text-lg font-medium focus:ring-2 focus:ring-primary/50 shadow-sm"
+      <div className="flex-1 flex gap-8 items-start min-h-0">
+        {/* Left Sidebar: Filters */}
+        <aside className="w-72 shrink-0 bg-card border border-border rounded-2xl sticky top-0 hidden lg:block overflow-y-auto">
+          <FilterPanel
+            counts={counts}
+            activeFilter={filter}
+            onFilterChange={(f) => setFilter(f)}
+            activeCollections={activeCollections}
+            onCollectionToggle={handleCollectionToggle}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
           />
-        </div>
-        <div className="flex items-center gap-2 p-1.5 bg-card border rounded-2xl shadow-sm">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${filter === "all" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "hover:bg-muted text-muted-foreground"}`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter("image")}
-            className={`px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${filter === "image" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "hover:bg-muted text-muted-foreground"}`}
-          >
-            Images
-          </button>
-          <button
-            onClick={() => setFilter("video")}
-            className={`px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${filter === "video" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "hover:bg-muted text-muted-foreground"}`}
-          >
-            Videos
-          </button>
+        </aside>
+
+        {/* Main Content: Grid */}
+        <div className="flex-1 space-y-6 overflow-y-auto custom-scrollbar pr-2 h-full pb-20">
+          <div className="flex items-center justify-between bg-card/50 border border-border px-6 py-4 rounded-2xl">
+            <div className="flex items-center gap-4">
+              <h2 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-3">
+                {loading ? "Re-indexing..." : "Asset Stream"}
+                {!loading && (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    {media.length} Results
+                  </span>
+                )}
+              </h2>
+            </div>
+
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                placeholder="Quick search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all"
+              />
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+              <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">
+                Hydrating Media Library...
+              </p>
+            </div>
+          ) : (
+            <MediaGrid
+              media={media}
+              onItemClick={(item) => setSelectedAsset(item)}
+            />
+          )}
         </div>
       </div>
 
-      <div className="border-t pt-10">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black flex items-center gap-3">
-                Results
-                <span className="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-widest">
-                  {media.length} Found
-                </span>
-              </h2>
-            </div>
-            <MediaGrid media={media} />
-          </div>
-        )}
-      </div>
+      <MediaPreviewDrawer
+        media={selectedAsset}
+        isOpen={!!selectedAsset}
+        onClose={() => setSelectedAsset(null)}
+      />
     </div>
   );
 }

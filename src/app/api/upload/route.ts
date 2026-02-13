@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { IncomingForm, File as FormidableFile } from "formidable";
-import fs from "fs";
 import { getStorageProvider } from "@/lib/storage";
-
-// Disable body parser for multipart/form-data
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 // Helper to parse form data from NextRequest
 async function parseForm(
@@ -61,10 +52,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle optional thumbnail if provided (Local storage fallback)
+    let finalThumbnailUrl = result.thumbnailUrl;
+
+    if (files.thumbnail && files.thumbnail.length > 0) {
+      const thumbFile = files.thumbnail[0] as File;
+      const thumbBuffer = Buffer.from(await thumbFile.arrayBuffer());
+      const thumbResult = await storage.upload(thumbBuffer, {
+        fileName: `thumb_${fileName.split(".")[0]}_${Date.now()}.jpg`,
+        fileType: "image",
+      });
+      if (thumbResult.success) {
+        finalThumbnailUrl = thumbResult.cdnUrl;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       url: result.url,
       cdnUrl: result.cdnUrl,
+      thumbnailUrl: finalThumbnailUrl,
       publicId: result.publicId,
     });
   } catch (error) {

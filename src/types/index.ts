@@ -22,6 +22,7 @@ export interface Media {
   storagePath: string;
   cdnUrl: string;
   thumbnailUrl?: string | null;
+  isCustomThumbnail: boolean;
   tags: string[];
   createdAt: string;
   updatedAt: string;

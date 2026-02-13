@@ -36,10 +36,27 @@ export class CloudinaryProvider implements StorageProvider {
         uploadStream.end(fileBuffer);
       });
 
+      let thumbnailUrl = result.secure_url;
+      if (fileType === "video") {
+        // Generate a thumbnail at the 3rd second by changing the extension to .jpg and adding the 'so_3' (start offset 3) transformation
+        thumbnailUrl = result.secure_url.replace(/\.[^/.]+$/, ".jpg");
+        // Check if there is already a transformation in the URL, if not add it
+        if (!thumbnailUrl.includes("/video/upload/")) {
+          // This is a simplified transformation approach for Cloudinary URLs
+          thumbnailUrl = thumbnailUrl.replace("/v1/", "/so_3/v1/");
+        } else {
+          thumbnailUrl = thumbnailUrl.replace(
+            "/video/upload/",
+            "/video/upload/so_3/",
+          );
+        }
+      }
+
       return {
         success: true,
         url: result.secure_url,
         cdnUrl: result.secure_url,
+        thumbnailUrl: thumbnailUrl,
         publicId: result.public_id,
       };
     } catch (error) {

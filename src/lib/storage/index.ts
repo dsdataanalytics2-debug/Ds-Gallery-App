@@ -3,6 +3,7 @@ export interface UploadResult {
   success: boolean;
   url: string;
   cdnUrl: string;
+  thumbnailUrl?: string;
   publicId?: string;
   error?: string;
 }

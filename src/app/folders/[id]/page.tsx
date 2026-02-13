@@ -14,6 +14,8 @@ import {
 import { Folder } from "@/types";
 import MediaGrid from "@/components/media/MediaGrid";
 import UploadModal from "@/components/media/UploadModal";
+import MediaPreviewDrawer from "@/components/media/MediaPreviewDrawer";
+import { Sparkles, LayoutGrid } from "lucide-react";
 
 export default function FolderPage({
   params,
@@ -25,6 +27,7 @@ export default function FolderPage({
   const [loading, setLoading] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
 
   const fetchFolder = async () => {
     try {
@@ -46,35 +49,34 @@ export default function FolderPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-slate-700">
-            Loading folder...
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest leading-relaxed">
+          Decrypting Collection...
+        </p>
       </div>
     );
   }
 
   if (!folder) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col items-center justify-center py-20 text-center px-4">
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border border-white/50 max-w-md">
-          <div className="p-6 rounded-2xl bg-red-50 mb-6 inline-block">
+      <div className="flex flex-col items-center justify-center py-32 text-center px-4">
+        <div className="bg-card border border-border rounded-3xl p-12 max-w-md shadow-2xl">
+          <div className="p-6 rounded-2xl bg-red-500/10 mb-6 inline-block">
             <Trash2 className="h-12 w-12 text-red-500" />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-3">
-            Folder not found
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Collection Disappeared
           </h2>
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            The folder you're looking for doesn't exist or has been removed.
+          <p className="text-slate-400 mb-8 leading-relaxed text-sm">
+            This collection seems to have been archived or removed from the
+            system.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all hover:scale-105"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all"
           >
-            <ArrowLeft className="h-4 w-4" /> Back to My Folders
+            <ArrowLeft className="h-4 w-4" /> Return to Dashboard
           </Link>
         </div>
       </div>
@@ -82,137 +84,104 @@ export default function FolderPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+    <div className="h-full flex flex-col gap-10 pb-20">
+      {/* Dynamic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pt-4">
+        <div className="space-y-4 flex-1">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+            <Link href="/" className="hover:text-indigo-400 transition-colors">
+              Workspace
+            </Link>
+            <span className="text-slate-800">/</span>
+            <span className="text-indigo-400">Collections</span>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-5xl font-bold tracking-tight text-white">
+              {folder.name}
+            </h1>
+            <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
+              {folder.description ||
+                "Comprehensive asset overview for this product collection."}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            {folder.productCategory && (
+              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest border border-indigo-500/20">
+                {folder.productCategory}
+              </span>
+            )}
+            {folder.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-widest border border-white/5"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 shrink-0">
+          <button
+            onClick={() => setIsUploadOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+          >
+            <Upload className="h-4 w-4" />
+            Import Assets
+          </button>
+          <button className="p-3.5 rounded-2xl bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 transition-all active:scale-95">
+            <Trash2 className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl relative z-10">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-          <Link href="/" className="hover:text-purple-600 transition-colors">
-            Workspace
-          </Link>
-          <span>/</span>
-          <span className="text-purple-600">{folder.name}</span>
-        </div>
-
-        {/* Header Section - Premium Card */}
-        <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
-
-          <div className="p-8 md:p-12 relative z-10">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
-              <div className="space-y-5 flex-1">
-                <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 tracking-tight leading-tight">
-                  {folder.name}
-                </h1>
-                <p className="text-xl text-slate-700 max-w-2xl font-medium leading-relaxed">
-                  {folder.description ||
-                    "Organize and manage your product media assets with ease."}
-                </p>
-
-                {/* Tags & Category */}
-                <div className="flex flex-wrap gap-2">
-                  {folder.productCategory && (
-                    <span className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-bold uppercase tracking-wider shadow-lg shadow-blue-500/30">
-                      {folder.productCategory}
-                    </span>
-                  )}
-                  {folder.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-700 text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                <button
-                  className="p-4 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 transition-all hover:scale-105 active:scale-95 shadow-lg border border-red-100"
-                  title="Delete Collection"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setIsUploadOpen(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-black transition-all hover:shadow-2xl hover:scale-105 active:scale-95 shadow-xl shadow-blue-500/30"
-                >
-                  <Upload className="h-5 w-5" />
-                  Upload Assets
-                </button>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="mt-6">
-              <div className="relative max-w-2xl mx-auto">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+      {/* Media Interaction Zone */}
+      <div className="bg-card/30 border border-border rounded-[2rem] overflow-hidden">
+        <div className="p-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <h2 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-3">
+                Asset Stream
+                <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-500 border border-white/5">
+                  {folder.media?.length || 0} Total
+                </span>
+              </h2>
+              <div className="h-4 w-px bg-white/10 hidden sm:block"></div>
+              <div className="relative hidden md:block w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <input
-                  type="text"
-                  placeholder="Search by filename..."
+                  placeholder="Filter by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-20 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-700 font-medium placeholder:text-slate-400 transition-all"
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all"
                 />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-semibold"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Gallery Section - Premium Card */}
-        <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
-
-          <div className="p-8 md:p-12 relative z-10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                  Gallery Content
-                  <span className="text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                    {folder.media?.length || 0} Files
-                  </span>
-                </h2>
-                <p className="text-base text-slate-600 font-medium">
-                  Browse through your high-quality product assets.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-200 shadow-lg self-start">
-                <button className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-105">
-                  <Grid className="h-4 w-4" />
-                </button>
-                <button className="p-3 rounded-xl hover:bg-slate-100 text-slate-600 transition-all hover:scale-105">
-                  <ListIcon className="h-4 w-4" />
-                </button>
               </div>
             </div>
 
-            <MediaGrid
-              media={
-                searchQuery
-                  ? (folder.media || []).filter((item) =>
-                      item.fileName
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()),
-                    )
-                  : folder.media || []
-              }
-            />
+            <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl self-start">
+              <button className="p-2 rounded-lg bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button className="p-2 rounded-lg text-slate-500 hover:text-white transition-colors">
+                <ListIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+
+          <MediaGrid
+            media={
+              searchQuery
+                ? (folder.media || []).filter((item) =>
+                    item.fileName
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()),
+                  )
+                : folder.media || []
+            }
+            onItemClick={(item) => setSelectedAsset(item)}
+          />
         </div>
       </div>
 
@@ -223,6 +192,12 @@ export default function FolderPage({
           setIsUploadOpen(false);
           fetchFolder();
         }}
+      />
+
+      <MediaPreviewDrawer
+        media={selectedAsset}
+        isOpen={!!selectedAsset}
+        onClose={() => setSelectedAsset(null)}
       />
     </div>
   );
