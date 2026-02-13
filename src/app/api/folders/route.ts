@@ -25,10 +25,14 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(folders);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching folders:", error);
     return NextResponse.json(
-      { error: "Failed to fetch folders" },
+      {
+        error: "Failed to fetch folders",
+        details: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
       { status: 500 },
     );
   }
@@ -54,15 +58,14 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(folder);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating folder:", error);
-    console.log("Error details:", JSON.stringify(error, null, 2));
-    console.log("Stack trace:", (error as Error).stack);
     return NextResponse.json(
       {
         error: "Failed to create folder",
-        message: (error as Error).message,
+        message: error.message,
         details: error,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
       { status: 500 },
     );

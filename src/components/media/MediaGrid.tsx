@@ -134,12 +134,18 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
                       playsInline
                       className="w-full h-full object-cover animate-in fade-in duration-500"
                     />
-                  ) : (
+                  ) : item.thumbnailUrl ? (
                     <img
-                      src={item.thumbnailUrl || "/video-placeholder.png"}
+                      src={item.thumbnailUrl}
                       alt={item.fileName}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center transition-transform duration-700 group-hover:scale-105">
+                      <div className="p-4 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                        <Play className="h-8 w-8 text-indigo-400/50 fill-indigo-400/10" />
+                      </div>
+                    </div>
                   )}
 
                   {/* Video-Specific Elements */}

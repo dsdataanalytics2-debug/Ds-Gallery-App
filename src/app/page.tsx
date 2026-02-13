@@ -44,12 +44,22 @@ export default function Home() {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (!response.ok) {
+        let errorMessage = `Error ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          // If not JSON, we'll use the status text
+        }
+        throw new Error(errorMessage);
+      }
       const data = await response.json();
       if (Array.isArray(data)) {
         setFolders(data);
       }
     } catch (error) {
-      console.error("Failed to fetch folders:", error);
+      console.error("Dashboard: Failed to fetch folders:", error);
     } finally {
       setLoading(false);
     }
@@ -63,13 +73,15 @@ export default function Home() {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       if (Array.isArray(data)) {
         // Just take the first 5 for the sidebar
         setRecentMedia(data.slice(0, 5));
       }
     } catch (error) {
-      console.error("Failed to fetch recent media:", error);
+      console.error("Dashboard: Failed to fetch recent media:", error);
     }
   };
 

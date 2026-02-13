@@ -36,10 +36,12 @@ export default function AllMediaPage() {
       if (res.ok) {
         const data = await res.json();
         setCounts({
-          all: data.summary.totalMedia,
-          images: data.summary.imageCount,
-          videos: data.summary.videoCount,
+          all: data.summary?.totalMedia || 0,
+          images: data.summary?.imageCount || 0,
+          videos: data.summary?.videoCount || 0,
         });
+      } else {
+        console.error("Media Library: Failed to fetch analytics:", res.status);
       }
     } catch (error) {
       console.error("Failed to fetch global stats:", error);
@@ -64,6 +66,8 @@ export default function AllMediaPage() {
       if (res.ok) {
         const data = await res.json();
         setMedia(data);
+      } else {
+        console.error("Media Library: Failed to fetch media:", res.status);
       }
     } catch (error) {
       console.error("Error fetching media:", error);

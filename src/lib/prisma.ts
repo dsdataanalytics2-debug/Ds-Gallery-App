@@ -7,7 +7,17 @@ const prismaClientSingleton = () => {
     connectionString: process.env.DATABASE_URL,
   });
   const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter });
+  const client = new PrismaClient({ adapter });
+
+  // Basic connection test
+  client
+    .$connect()
+    .then(() => console.log("Prisma: Connected to database successfully"))
+    .catch((err) =>
+      console.error("Prisma: Failed to connect to database:", err),
+    );
+
+  return client;
 };
 
 declare global {
