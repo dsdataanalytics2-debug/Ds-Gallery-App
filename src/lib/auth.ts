@@ -40,13 +40,35 @@ export function getAuthenticatedUser(request: Request): AuthUser | null {
   return null;
 }
 
-export function unauthorizedResponse() {
-  return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+export function unauthorizedResponse(request?: Request) {
+  const headers: any = {};
+  if (request) {
+    request.headers.forEach((v, k) => {
+      headers[k] = v;
+    });
+  }
+  return NextResponse.json(
+    {
+      error: "Unauthorized access",
+      headers: request ? headers : undefined,
+      message: "Missing or invalid Authorization header",
+    },
+    { status: 401 },
+  );
 }
 
-export function forbiddenResponse() {
+export function forbiddenResponse(request?: Request) {
+  const headers: any = {};
+  if (request) {
+    request.headers.forEach((v, k) => {
+      headers[k] = v;
+    });
+  }
   return NextResponse.json(
-    { error: "Forbidden: Admin access required" },
+    {
+      error: "Forbidden: Admin access required",
+      headers: request ? headers : undefined,
+    },
     { status: 403 },
   );
 }

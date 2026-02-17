@@ -21,17 +21,16 @@ export interface StorageProvider {
 }
 
 // Factory function to get the appropriate storage provider
-export function getStorageProvider(): StorageProvider {
-  const provider = process.env.STORAGE_PROVIDER || "local";
-
-  switch (provider.toLowerCase()) {
-    case "cloudinary":
-      // Dynamic import to avoid loading unnecessary code
-      const { CloudinaryProvider } = require("./cloudinary");
-      return new CloudinaryProvider();
+export async function getStorageProvider(
+  type: "local" | "google-drive" = "local",
+): Promise<StorageProvider> {
+  switch (type) {
+    case "google-drive":
+      const { GoogleDriveProvider } = await import("./google-drive");
+      return new GoogleDriveProvider();
     case "local":
     default:
-      const { LocalStorageProvider } = require("./local");
+      const { LocalStorageProvider } = await import("./local");
       return new LocalStorageProvider();
   }
 }

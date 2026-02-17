@@ -1,19 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Loader2, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
 
 interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFolderCreated?: () => void;
+  parentId?: string;
 }
 
 export default function CreateFolderModal({
   isOpen,
   onClose,
   onFolderCreated,
+  parentId,
 }: CreateFolderModalProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,30 +31,91 @@ export default function CreateFolderModal({
     description: "",
     productCategory: "",
     tags: "",
+    ownerId: "",
   });
+  const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setIsAdmin(user.role === "admin");
+
+      if (user.role === "admin") {
+        fetchUsers();
+      }
+    }
+  }, [isOpen]);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const res = await fetch("/api/users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-role": user.role,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
       const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+
+      if (!token || !userData) {
+        throw new Error("Authentication data missing. Please log in again.");
+      }
+
+      const payload = {
+        ...formData,
+        parentId: parentId || null,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      };
+
+      console.log("CreateFolderModal Payload:", payload);
+
       const res = await fetch("/api/folders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "x-user-data": userData,
         },
-        body: JSON.stringify({
-          ...formData,
-          tags: formData.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-        }),
+        body: JSON.stringify(payload),
       });
+
+      console.log("CreateFolderModal Status:", res.status, res.statusText);
+
+      const responseText = await res.text();
+      console.log("CreateFolderModal Raw Response:", responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        data = { error: "Invalid JSON response from server" };
+      }
 
       if (res.ok) {
         onClose();
@@ -54,12 +124,25 @@ export default function CreateFolderModal({
           description: "",
           productCategory: "",
           tags: "",
+          ownerId: "",
         });
         if (onFolderCreated) onFolderCreated();
         router.refresh();
+      } else {
+        const errorMsg =
+          data.message || data.error || `Server error (${res.status})`;
+        setError(errorMsg);
+
+        // If it's a 401, it might be the stale ID issue
+        if (res.status === 401 && data.error === "Session data mismatch") {
+          console.warn(
+            "Detected stale session data. User needs to login again.",
+          );
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating folder:", error);
+      setError(error.message || "An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -79,6 +162,11 @@ export default function CreateFolderModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Collection Name *
@@ -111,6 +199,32 @@ export default function CreateFolderModal({
               <option value="AliShop">AliShop</option>
             </select>
           </div>
+
+          {isAdmin && (
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <UserIcon className="h-3 w-3" />
+                Assign Owner (Admin Only)
+              </label>
+              <select
+                value={formData.ownerId}
+                onChange={(e) =>
+                  setFormData({ ...formData, ownerId: e.target.value })
+                }
+                className="w-full bg-slate-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer"
+              >
+                <option value="">Default (Me)</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name || u.email} ({u.role})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-slate-500 font-medium">
+                Leave as default to own this collection yourself.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500">

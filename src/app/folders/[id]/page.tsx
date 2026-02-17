@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Upload,
@@ -10,28 +11,55 @@ import {
   Trash2,
   Loader2,
   Search,
+  FolderPlus,
+  Settings,
+  Users,
+  Shield,
+  Mail,
 } from "lucide-react";
 import { Folder } from "@/types";
 import MediaGrid from "@/components/media/MediaGrid";
 import UploadModal from "@/components/media/UploadModal";
 import MediaPreviewDrawer from "@/components/media/MediaPreviewDrawer";
+import FolderCard from "@/components/folders/FolderCard";
+import CreateFolderModal from "@/components/folders/CreateFolderModal";
+import FolderSettingsModal from "@/components/folders/FolderSettingsModal";
 import { Sparkles, LayoutGrid } from "lucide-react";
+import Pagination from "@/components/ui/Pagination";
+import { Media } from "@/types";
 
 export default function FolderPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
   const { id } = use(params);
   const [folder, setFolder] = useState<Folder | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Media | null>(null);
+  const [media, setMedia] = useState<Media[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalPages, setTotalPages] = useState(1);
+  const [mediaCount, setMediaCount] = useState(0);
+
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showAccessList, setShowAccessList] = useState(false);
 
   const fetchFolder = async () => {
     try {
-      const res = await fetch(`/api/folders/${id}`);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/folders/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setFolder(data);
@@ -43,9 +71,91 @@ export default function FolderPage({
     }
   };
 
+  const fetchMedia = async () => {
+    setMediaLoading(true);
+    try {
+      const params = new URLSearchParams({
+        folderIds: id,
+        page: page.toString(),
+        limit: pageSize.toString(),
+      });
+      if (searchQuery) params.append("q", searchQuery);
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/media?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setMedia(result.data);
+        setTotalPages(result.pagination.totalPages);
+        setMediaCount(result.pagination.total);
+      }
+    } catch (error) {
+      console.error("Error fetching folder media:", error);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchFolder();
   }, [id]);
+
+  useEffect(() => {
+    fetchMedia();
+  }, [id, page, pageSize]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (page !== 1) setPage(1);
+      else fetchMedia();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const getInitials = (nameOrEmail: string) => {
+    if (!nameOrEmail) return "??";
+    const parts = nameOrEmail.split(/[ @._-]/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return nameOrEmail.substring(0, 2).toUpperCase();
+  };
+
+  const handleDeleteFolder = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this collection? All digital assets inside will be unassigned but preserved in the system.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/folders/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
+
+      if (res.ok) {
+        router.push("/folders");
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to delete collection: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting folder:", error);
+      alert("An unexpected error occurred while deleting the collection.");
+    }
+  };
 
   if (loading) {
     return (
@@ -88,18 +198,118 @@ export default function FolderPage({
       {/* Dynamic Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pt-4">
         <div className="space-y-4 flex-1">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-            <Link href="/" className="hover:text-indigo-400 transition-colors">
-              Workspace
+          <div className="flex items-center gap-4">
+            <Link
+              href={
+                folder.parentId ? `/folders/${folder.parentId}` : "/folders"
+              }
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all border border-white/5"
+              title={folder.parentId ? "Back to Parent" : "Back to Collections"}
+            >
+              <ArrowLeft className="h-4 w-4" />
             </Link>
-            <span className="text-slate-800">/</span>
-            <span className="text-indigo-400">Collections</span>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+              <Link
+                href="/"
+                className="hover:text-indigo-400 transition-colors"
+              >
+                Workspace
+              </Link>
+              <span className="text-slate-800">/</span>
+              {folder.parent && (
+                <>
+                  <Link
+                    href={`/folders/${folder.parentId}`}
+                    className="hover:text-indigo-400 transition-colors"
+                  >
+                    {folder.parent.name}
+                  </Link>
+                  <span className="text-slate-800">/</span>
+                </>
+              )}
+              <span className="text-indigo-400">Collections</span>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-5xl font-bold tracking-tight text-white">
-              {folder.name}
-            </h1>
+            <div className="flex flex-col gap-2">
+              <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+                {folder.name}
+              </h1>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+                  <Shield className="h-3 w-3" />
+                  Owner: {folder.owner?.name || folder.owner?.email}
+                </div>
+
+                {folder.permissions && folder.permissions.length > 0 && (
+                  <div className="flex items-center gap-2 relative">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+                      <Users className="h-3 w-3" />
+                      Shared With:
+                    </span>
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowAccessList(!showAccessList)}
+                        className="flex items-center -space-x-2 group hover:opacity-80 transition-opacity"
+                        title="Show Access List"
+                      >
+                        {folder.permissions.map((p) => (
+                          <div
+                            key={p.id}
+                            title={`${p.user.name || p.user.email} (${p.user.role})`}
+                            className="h-6 w-6 rounded-full bg-slate-800 border-2 border-background flex items-center justify-center text-[8px] font-bold text-indigo-400 group-hover:border-indigo-500/50 transition-colors"
+                          >
+                            {getInitials(p.user.name || p.user.email)}
+                          </div>
+                        ))}
+                        {folder.permissions.length > 3 && (
+                          <div className="h-6 w-6 rounded-full bg-slate-700 border-2 border-background flex items-center justify-center text-[10px] font-bold text-slate-300">
+                            +{folder.permissions.length - 3}
+                          </div>
+                        )}
+                      </button>
+
+                      {showAccessList && (
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-slate-900 border border-border rounded-xl shadow-2xl z-[110] p-2 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="space-y-1">
+                            <div className="px-2 py-1.5 mb-1 border-b border-white/5 flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                Authorized Users
+                              </span>
+                              <button
+                                onClick={() => setIsSettingsOpen(true)}
+                                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+                              >
+                                <Settings className="h-3 w-3" />
+                                Manage
+                              </button>
+                            </div>
+                            {folder.permissions.map((p) => (
+                              <div
+                                key={p.id}
+                                className="flex flex-col p-2 hover:bg-white/5 rounded-lg transition-colors group"
+                              >
+                                <span className="text-xs font-bold text-white flex items-center gap-2">
+                                  {p.user.name || "Unnamed User"}
+                                  {p.user.role === "admin" && (
+                                    <Shield className="h-2.5 w-2.5 text-amber-500" />
+                                  )}
+                                </span>
+                                <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                  <Mail className="h-2.5 w-2.5" />
+                                  {p.user.email}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
               {folder.description ||
                 "Comprehensive asset overview for this product collection."}
@@ -125,17 +335,52 @@ export default function FolderPage({
 
         <div className="flex items-center gap-4 shrink-0">
           <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5 transition-all active:scale-95"
+            title="Collection Settings"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setIsCreateFolderOpen(true)}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all border border-slate-700 active:scale-95"
+          >
+            <FolderPlus className="h-4 w-4" />
+            New Folder
+          </button>
+          <button
             onClick={() => setIsUploadOpen(true)}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
           >
             <Upload className="h-4 w-4" />
             Import Assets
           </button>
-          <button className="p-3.5 rounded-2xl bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 transition-all active:scale-95">
+          <button
+            onClick={handleDeleteFolder}
+            className="p-3.5 rounded-2xl bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 transition-all active:scale-95"
+            title="Delete Collection"
+          >
             <Trash2 className="h-5 w-5" />
           </button>
         </div>
       </div>
+
+      {/* Subfolders Section */}
+      {folder.children && folder.children.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-3">
+            Sub-Collections
+            <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-500 border border-white/5">
+              {folder.children.length}
+            </span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            {folder.children.map((child) => (
+              <FolderCard key={child.id} folder={child} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Media Interaction Zone */}
       <div className="bg-card/30 border border-border rounded-[2rem] overflow-hidden">
@@ -145,7 +390,7 @@ export default function FolderPage({
               <h2 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-3">
                 Asset Stream
                 <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-500 border border-white/5">
-                  {folder.media?.length || 0} Total
+                  {mediaCount} Total
                 </span>
               </h2>
               <div className="h-4 w-px bg-white/10 hidden sm:block"></div>
@@ -170,20 +415,47 @@ export default function FolderPage({
             </div>
           </div>
 
-          <MediaGrid
-            media={
-              searchQuery
-                ? (folder.media || []).filter((item) =>
-                    item.fileName
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase()),
-                  )
-                : folder.media || []
-            }
-            onItemClick={(item) => setSelectedAsset(item)}
-          />
+          {mediaLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-500/50" />
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                Updating Stream...
+              </p>
+            </div>
+          ) : (
+            <>
+              <MediaGrid
+                media={media}
+                onItemClick={(item) => setSelectedAsset(item)}
+              />
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+                onPageChange={setPage}
+              />
+            </>
+          )}
         </div>
       </div>
+
+      <CreateFolderModal
+        isOpen={isCreateFolderOpen}
+        onClose={() => setIsCreateFolderOpen(false)}
+        parentId={folder.id}
+        onFolderCreated={fetchFolder}
+      />
+
+      <FolderSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        folder={folder}
+        onUpdate={fetchFolder}
+      />
 
       <UploadModal
         folderId={folder.id}

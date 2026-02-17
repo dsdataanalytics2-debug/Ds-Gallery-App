@@ -17,6 +17,7 @@ import Link from "next/link";
 import { Folder } from "@/types";
 import { cn } from "@/lib/utils";
 import CreateFolderModal from "@/components/folders/CreateFolderModal";
+import Pagination from "@/components/ui/Pagination";
 
 export default function FoldersPage() {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -24,19 +25,30 @@ export default function FoldersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchFolders = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/folders", {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+      });
+      if (searchQuery) params.append("q", searchQuery);
+
+      const res = await fetch(`/api/folders?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
       if (res.ok) {
-        const data = await res.json();
-        setFolders(data);
+        const result = await res.json();
+        setFolders(result.data);
+        setTotalPages(result.pagination.totalPages);
       }
     } catch (error) {
       console.error("Failed to fetch folders:", error);
@@ -47,15 +59,15 @@ export default function FoldersPage() {
 
   useEffect(() => {
     fetchFolders();
-  }, []);
+  }, [page, pageSize]);
 
-  const filteredFolders = folders.filter(
-    (f) =>
-      f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.productCategory?.toLowerCase() || "").includes(
-        searchQuery.toLowerCase(),
-      ),
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (page !== 1) setPage(1);
+      else fetchFolders();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <div className="h-full flex flex-col gap-10">
@@ -135,82 +147,100 @@ export default function FoldersPage() {
             Synchronizing Clusters...
           </p>
         </div>
-      ) : filteredFolders.length === 0 ? (
+      ) : folders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-slate-900/20">
           <div className="p-6 bg-white/5 rounded-2xl mb-6">
             <FolderIcon className="h-10 w-10 text-slate-600" />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
-            Initialize Your First Collection
+            {searchQuery
+              ? "No Results Found"
+              : "Initialize Your First Collection"}
           </h3>
           <p className="text-slate-500 max-w-sm mb-8 text-sm leading-relaxed">
-            Unlock coordinated asset management by grouping your media into
-            intelligent product collections.
+            {searchQuery
+              ? `We couldn't find any collections matching "${searchQuery}".`
+              : "Unlock coordinated asset management by grouping your media into intelligent product collections."}
           </p>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold border border-white/10 transition-all text-sm"
-          >
-            Get Started
-          </button>
+          {!searchQuery && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold border border-white/10 transition-all text-sm"
+            >
+              Get Started
+            </button>
+          )}
         </div>
       ) : (
-        <div
-          className={cn(
-            "grid gap-6",
-            viewMode === "grid"
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              : "grid-cols-1",
-          )}
-        >
-          {filteredFolders.map((folder) => (
-            <Link
-              key={folder.id}
-              href={`/folders/${folder.id}`}
-              className={cn(
-                "group bg-card border border-border rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-all duration-300",
-                viewMode === "list" && "flex items-center p-4 gap-6",
-              )}
-            >
-              {viewMode === "grid" && (
-                <div className="aspect-[16/9] bg-slate-900 relative p-4 flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-transparent group-hover:bg-indigo-600/5 transition-colors" />
-                  <FolderIcon className="h-16 w-16 text-slate-800 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-500" />
-                  <div className="absolute top-4 right-4 p-2 rounded-lg bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowUpRight className="h-4 w-4 text-white" />
+        <>
+          <div
+            className={cn(
+              "grid gap-6",
+              viewMode === "grid"
+                ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4  xl:grid-cols-7"
+                : "grid-cols-1",
+            )}
+          >
+            {folders.map((folder) => (
+              <Link
+                key={folder.id}
+                href={`/folders/${folder.id}`}
+                className={cn(
+                  "group bg-card border border-border rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-all duration-300",
+                  viewMode === "list" && "flex items-center p-4 gap-6",
+                )}
+              >
+                {viewMode === "grid" && (
+                  <div className="aspect-[16/9] bg-slate-900 relative p-4 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-transparent group-hover:bg-indigo-600/5 transition-colors" />
+                    <FolderIcon className="h-16 w-16 text-slate-800 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-500" />
+                    <div className="absolute top-4 right-4 p-2 rounded-lg bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ArrowUpRight className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                )}
+
+                {viewMode === "list" && (
+                  <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shrink-0">
+                    <FolderIcon className="h-6 w-6 text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                  </div>
+                )}
+
+                <div className={cn("p-6", viewMode === "list" && "p-0 flex-1")}>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold text-white group-hover:text-indigo-400 transition-colors">
+                      {folder.name}
+                    </h3>
+                    <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 uppercase">
+                      {folder._count?.media || 0} Assets
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
+                    {folder.description ||
+                      "No description provided for this collection."}
+                  </p>
+                  <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="h-3 w-3 text-indigo-400/50" />
+                      <span>{folder.productCategory || "Uncategorized"}</span>
+                    </div>
                   </div>
                 </div>
-              )}
+              </Link>
+            ))}
+          </div>
 
-              {viewMode === "list" && (
-                <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shrink-0">
-                  <FolderIcon className="h-6 w-6 text-slate-600 group-hover:text-indigo-400 transition-colors" />
-                </div>
-              )}
-
-              <div className={cn("p-6", viewMode === "list" && "p-0 flex-1")}>
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-white group-hover:text-indigo-400 transition-colors">
-                    {folder.name}
-                  </h3>
-                  <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 uppercase">
-                    {folder.media?.length || 0} Assets
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
-                  {folder.description ||
-                    "No description provided for this collection."}
-                </p>
-                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3 text-indigo-400/50" />
-                    <span>{folder.productCategory || "Uncategorized"}</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            onPageChange={setPage}
+          />
+        </>
       )}
 
       <CreateFolderModal

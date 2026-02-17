@@ -15,6 +15,7 @@ import MediaGrid from "@/components/media/MediaGrid";
 import FilterPanel from "@/components/media/FilterPanel";
 import MediaPreviewDrawer from "@/components/media/MediaPreviewDrawer";
 import { Sparkles } from "lucide-react";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AllMediaPage() {
   const [media, setMedia] = useState<Media[]>([]);
@@ -24,6 +25,9 @@ export default function AllMediaPage() {
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
   const [activeCollections, setActiveCollections] = useState<string[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Media | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchGlobalStats = async () => {
     try {
@@ -31,6 +35,7 @@ export default function AllMediaPage() {
       const res = await fetch("/api/analytics", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
       if (res.ok) {
@@ -57,15 +62,20 @@ export default function AllMediaPage() {
       if (activeCollections.length > 0)
         params.append("folderIds", activeCollections.join(","));
 
+      params.append("page", page.toString());
+      params.append("limit", pageSize.toString());
+
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/media?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
       if (res.ok) {
-        const data = await res.json();
-        setMedia(data);
+        const result = await res.json();
+        setMedia(result.data);
+        setTotalPages(result.pagination.totalPages);
       } else {
         console.error("Media Library: Failed to fetch media:", res.status);
       }
@@ -81,8 +91,13 @@ export default function AllMediaPage() {
   }, []);
 
   useEffect(() => {
+    fetchMedia();
+  }, [page, pageSize]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
-      fetchMedia();
+      if (page !== 1) setPage(1);
+      else fetchMedia();
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery, filter, activeCollections]);
@@ -159,10 +174,22 @@ export default function AllMediaPage() {
               </p>
             </div>
           ) : (
-            <MediaGrid
-              media={media}
-              onItemClick={(item) => setSelectedAsset(item)}
-            />
+            <>
+              <MediaGrid
+                media={media}
+                onItemClick={(item) => setSelectedAsset(item)}
+              />
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+                onPageChange={setPage}
+              />
+            </>
           )}
         </div>
       </div>

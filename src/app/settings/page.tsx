@@ -6,20 +6,15 @@ import {
   User,
   Shield,
   Database,
-  Bell,
-  Globe,
-  Cloud,
-  Lock,
-  Key,
   Smartphone,
   CheckCircle2,
-  ChevronRight,
-  ExternalLink,
   Loader2,
   Save,
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/components/providers/SettingsProvider";
+import GoogleDriveConnect from "@/components/settings/GoogleDriveConnect";
 
 const sections = [
   {
@@ -49,6 +44,15 @@ const sections = [
 ];
 
 export default function SettingsPage() {
+  const {
+    darkTheme,
+    setDarkTheme,
+    liquidTransitions,
+    setLiquidTransitions,
+    realTimeSync,
+    setRealTimeSync,
+  } = useSettings();
+
   const [activeSection, setActiveSection] = useState("storage");
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -61,6 +65,30 @@ export default function SettingsPage() {
       setTimeout(() => setShowToast(false), 3000);
     }, 1000);
   };
+
+  const interfaceToggles = [
+    {
+      id: "theme",
+      label: "Dark Intelligence Theme",
+      desc: "Optimized for high-contrast professional editing environments",
+      active: darkTheme,
+      toggle: () => setDarkTheme(!darkTheme),
+    },
+    {
+      id: "transitions",
+      label: "Liquid Transitions",
+      desc: "Enable motion-blur transitions between system states",
+      active: liquidTransitions,
+      toggle: () => setLiquidTransitions(!liquidTransitions),
+    },
+    {
+      id: "sync",
+      label: "Real-time Delta Sync",
+      desc: "Sync changes across all instances via WebSocket stream",
+      active: realTimeSync,
+      toggle: () => setRealTimeSync(!realTimeSync),
+    },
+  ];
 
   return (
     <div className="h-full flex flex-col gap-10">
@@ -84,7 +112,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-5xl font-bold tracking-tight text-white">
+          <h1 className="text-5xl font-bold tracking-tight text-white dark:text-white lg:text-white">
             Global Settings
           </h1>
           <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
@@ -148,6 +176,9 @@ export default function SettingsPage() {
                     GATEWAY ACTIVE
                   </span>
                 </div>
+
+                {/* Google Drive OAuth Connection */}
+                <GoogleDriveConnect />
 
                 <div className="grid gap-4">
                   {[
@@ -223,10 +254,10 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Interface Settings (Always visible for now as a separate card) */}
+          {/* Interface Settings */}
           <div className="bg-card border border-border rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="space-y-1">
-              <h3 className="text-lg font-bold text-white tracking-tight">
+              <h3 className="text-lg font-bold text-white tracking-tight leading-none mb-1">
                 Interface Protocols
               </h3>
               <p className="text-xs text-slate-500 font-medium">
@@ -235,24 +266,11 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-4">
-              {[
-                {
-                  label: "Dark Intelligence Theme",
-                  desc: "Optimized for high-contrast professional editing environments",
-                  active: true,
-                },
-                {
-                  label: "Liquid Transitions",
-                  desc: "Enable motion-blur transitions between system states",
-                  active: true,
-                },
-                {
-                  label: "Real-time Delta Sync",
-                  desc: "Sync changes across all instances via WebSocket stream",
-                  active: false,
-                },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-2">
+              {interfaceToggles.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-2"
+                >
                   <div className="space-y-1">
                     <p className="text-sm font-bold text-white uppercase tracking-tight">
                       {item.label}
@@ -262,14 +280,15 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <button
+                    onClick={item.toggle}
                     className={cn(
-                      "w-12 h-6 rounded-full transition-all relative",
+                      "w-12 h-6 rounded-full transition-all relative border border-white/5",
                       item.active ? "bg-indigo-600" : "bg-slate-800",
                     )}
                   >
                     <div
                       className={cn(
-                        "w-4 h-4 rounded-full bg-white absolute top-1 transition-all",
+                        "w-4 h-4 rounded-full bg-white absolute top-1 transition-all shadow-md",
                         item.active ? "right-1" : "left-1",
                       )}
                     />

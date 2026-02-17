@@ -39,9 +39,11 @@ export default function Home() {
   const fetchFolders = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/folders", {
+      // Fetch the first 4 folders for the dashboard overview
+      const response = await fetch("/api/folders?limit=4", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
       if (!response.ok) {
@@ -49,14 +51,12 @@ export default function Home() {
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch (e) {
-          // If not JSON, we'll use the status text
-        }
+        } catch (e) {}
         throw new Error(errorMessage);
       }
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setFolders(data);
+      const result = await response.json();
+      if (result && Array.isArray(result.data)) {
+        setFolders(result.data);
       }
     } catch (error) {
       console.error("Dashboard: Failed to fetch folders:", error);
@@ -68,17 +68,18 @@ export default function Home() {
   const fetchRecentMedia = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/media", {
+      // Fetch the first 5 for the sidebar
+      const response = await fetch("/api/media?limit=5", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        // Just take the first 5 for the sidebar
-        setRecentMedia(data.slice(0, 5));
+      const result = await response.json();
+      if (result && Array.isArray(result.data)) {
+        setRecentMedia(result.data);
       }
     } catch (error) {
       console.error("Dashboard: Failed to fetch recent media:", error);
@@ -107,7 +108,10 @@ export default function Home() {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch("/api/analytics", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-user-data": localStorage.getItem("user") || "",
+          },
         });
         if (res.ok) {
           const data = await res.json();
@@ -261,7 +265,7 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {folders.slice(0, 4).map((folder) => (
                 <FolderCard key={folder.id} folder={folder} />
               ))}

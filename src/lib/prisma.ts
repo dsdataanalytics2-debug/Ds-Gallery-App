@@ -21,8 +21,17 @@ const prismaClientSingleton = () => {
 };
 
 declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+  namespace NodeJS {
+    interface Global {
+      prisma: PrismaClient;
+    }
+  }
 }
+
+// Ensure globalThis has prisma
+declare const globalThis: {
+  prisma: PrismaClient;
+} & typeof global;
 
 const prisma = globalThis.prisma ?? prismaClientSingleton();
 

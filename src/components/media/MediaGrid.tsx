@@ -48,6 +48,7 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
 
@@ -73,6 +74,7 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
       const trackRes = await fetch(`/api/media/${item.id}/download`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
 
@@ -113,7 +115,7 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
         {media.map((item) => (
           <div
             key={item.id}
@@ -138,7 +140,11 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
                 <div className="w-full h-full relative">
                   {hoveredId === item.id ? (
                     <video
-                      src={item.cdnUrl}
+                      src={
+                        item.storageType === "google-drive"
+                          ? `/api/media/${item.id}/proxy?token=${localStorage.getItem("token")}`
+                          : item.cdnUrl
+                      }
                       muted
                       autoPlay
                       loop
@@ -147,7 +153,11 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
                     />
                   ) : item.thumbnailUrl ? (
                     <img
-                      src={item.thumbnailUrl}
+                      src={
+                        item.storageType === "google-drive"
+                          ? `/api/media/${item.id}/proxy?type=thumbnail&token=${localStorage.getItem("token")}`
+                          : item.thumbnailUrl
+                      }
                       alt={item.fileName}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />

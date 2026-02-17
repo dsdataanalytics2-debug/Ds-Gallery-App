@@ -36,7 +36,10 @@ export default function HistoryPage() {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch("/api/admin/history", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-user-data": localStorage.getItem("user") || "",
+          },
         });
         if (res.ok) {
           const data = await res.json();

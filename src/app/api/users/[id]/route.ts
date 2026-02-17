@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   verifyAuth,
+  getAuthenticatedUser,
   unauthorizedResponse,
   forbiddenResponse,
 } from "@/lib/auth";
@@ -49,14 +50,32 @@ export async function DELETE(
 
   try {
     const { id } = await params;
+    const sessionUser = getAuthenticatedUser(request);
 
-    // Prevent self-deletion if possible (logic would depend on current user ID)
+    // Safety Net: Re-assign all folders owned by this user to the current admin
+    // before deleting the user. This prevents orphaned folders/assets.
+    if (sessionUser) {
+      await prisma.folder.updateMany({
+        where: { ownerId: id },
+        data: { ownerId: sessionUser.id },
+      });
+      console.log(
+        `Safety Net: Folders owned by user ${id} transferred to admin ${sessionUser.id}`,
+      );
+    }
+
+    // Also delete any folder permissions granted to this user
+    await prisma.folderPermission.deleteMany({
+      where: { userId: id },
+    });
 
     await prisma.user.delete({
       where: { id },
     });
 
-    return NextResponse.json({ message: "User deleted successfully" });
+    return NextResponse.json({
+      message: "User deleted successfully and folders preserved.",
+    });
   } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json(

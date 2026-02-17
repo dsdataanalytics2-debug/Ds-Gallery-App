@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { SettingsProvider } from "@/components/providers/SettingsProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,11 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         className={`${inter.className} min-h-screen bg-background text-foreground antialiased custom-scrollbar`}
       >
-        <AuthGuard>{children}</AuthGuard>
+        <SettingsProvider>
+          <AuthGuard>{children}</AuthGuard>
+        </SettingsProvider>
       </body>
     </html>
   );

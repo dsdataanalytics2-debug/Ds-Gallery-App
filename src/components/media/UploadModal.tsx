@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import {
   X,
   Upload,
-  File,
+  File as FileIcon,
   ImageIcon,
   Film,
   Loader2,
@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   Cloud,
   FileText,
+  Play,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Folder } from "@/types";
@@ -37,20 +39,99 @@ export default function UploadModal({
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState<number>(0);
+  const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  const [storageType, setStorageType] = useState<"local" | "google-drive">(
+    "local",
+  );
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([]);
   const [loadingFolders, setLoadingFolders] = useState(false);
   const [customFileNames, setCustomFileNames] = useState<{
-    [key: number]: string;
+    [key: string]: string;
   }>({});
   const [folderSearchQuery, setFolderSearchQuery] = useState("");
-  const [thumbnails, setThumbnails] = useState<{ [key: number]: Blob | File }>(
+  const [thumbnails, setThumbnails] = useState<{ [key: string]: Blob | File }>(
     {},
   );
   const [isCustomThumb, setIsCustomThumb] = useState<{
-    [key: number]: boolean;
+    [key: string]: boolean;
   }>({});
+
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  const getFileKey = (file: File | Blob | undefined | null) => {
+    if (!file) return "";
+    const isFile = "name" in file && "lastModified" in file;
+    return isFile
+      ? `${(file as any).name}-${file.size}-${(file as any).lastModified}`
+      : `blob-${file.size}`;
+  };
+
+  const closePreview = () => {
+    setPreviewFile(null);
+    setIsPreviewLoading(false);
+  };
+
+  const handleRemoveFromPreview = (file: File) => {
+    setFiles((prev) => prev.filter((f) => f !== file));
+    closePreview();
+  };
+  const [objectUrls, setObjectUrls] = useState<{ [key: string]: string }>({});
+
+  // Unified ObjectURL generator/cache
+  const getFileUrl = (
+    file: File | Blob | undefined | null,
+    prefix?: string,
+  ) => {
+    if (!file) return null;
+    const isFile = "name" in file && "lastModified" in file;
+    const key = prefix
+      ? `${prefix}-${file.size}`
+      : isFile
+        ? `${(file as any).name}-${file.size}-${(file as any).lastModified}`
+        : `blob-${file.size}`;
+
+    return objectUrls[key] || null;
+  };
+
+  useEffect(() => {
+    const newUrls: { [key: string]: string } = { ...objectUrls };
+    let changed = false;
+
+    // Track main files
+    files.forEach((file) => {
+      const key = `${file.name}-${file.size}-${file.lastModified}`;
+      if (!newUrls[key]) {
+        newUrls[key] = URL.createObjectURL(file);
+        changed = true;
+      }
+    });
+
+    // Track thumbnails
+    Object.entries(thumbnails).forEach(([fileKey, thumb]) => {
+      if (thumb) {
+        // Match the prefixed key logic in getFileUrl
+        const thumbKey = `thumb-${fileKey}-${thumb.size}`;
+        if (!newUrls[thumbKey]) {
+          newUrls[thumbKey] = URL.createObjectURL(thumb);
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      setObjectUrls(newUrls);
+    }
+  }, [files, thumbnails]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(objectUrls).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []); // Only on unmount
 
   const filteredFolders = folders.filter(
     (folder) =>
@@ -71,18 +152,25 @@ export default function UploadModal({
   useEffect(() => {
     const generateThumbs = async () => {
       const newThumbs = { ...thumbnails };
+      let changed = false;
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (file.type.startsWith("video") && !newThumbs[i]) {
+        const key = getFileKey(file);
+        if (file.type.startsWith("video") && !newThumbs[key]) {
           try {
             const { captureVideoFrame } = await import("@/lib/media-utils");
             const blob = await captureVideoFrame(file);
-            newThumbs[i] = blob;
-            setThumbnails({ ...newThumbs });
+            newThumbs[key] = blob;
+            changed = true;
           } catch (error) {
             console.error("Failed to capture frame:", error);
           }
         }
+      }
+
+      if (changed) {
+        setThumbnails(newThumbs);
       }
     };
     generateThumbs();
@@ -92,15 +180,21 @@ export default function UploadModal({
     setLoadingFolders(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/folders", {
+      const response = await fetch("/api/folders?limit=100&recursive=true", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
-      const data = await response.json();
-      setFolders(data);
+      const result = await response.json();
+      if (result && Array.isArray(result.data)) {
+        setFolders(result.data);
+      } else {
+        setFolders([]);
+      }
     } catch (error) {
       console.error("Failed to fetch folders:", error);
+      setFolders([]);
     } finally {
       setLoadingFolders(false);
     }
@@ -125,35 +219,42 @@ export default function UploadModal({
   });
 
   const handleCustomThumbUpload = (
-    index: number,
+    fileKey: string,
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      setThumbnails((prev) => ({ ...prev, [index]: file }));
-      setIsCustomThumb((prev) => ({ ...prev, [index]: true }));
+      setThumbnails((prev) => ({ ...prev, [fileKey]: file }));
+      setIsCustomThumb((prev) => ({ ...prev, [fileKey]: true }));
     }
   };
 
   const handleUpload = async () => {
     if (files.length === 0 || selectedFolderIds.length === 0) return;
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(0);
+    setUploadSpeed(0);
+    setEstimatedTime(null);
+
     try {
       const uploadedFiles = [];
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user") || "";
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        const key = getFileKey(file);
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("fileName", customFileNames[i] || file.name);
+        formData.append("fileName", customFileNames[key] || file.name);
         formData.append(
           "fileType",
           file.type.startsWith("image") ? "image" : "video",
         );
+        formData.append("storageType", storageType);
 
-        // Append thumbnail if it exists
-        if (thumbnails[i]) {
-          const thumb = thumbnails[i];
+        if (thumbnails[key]) {
+          const thumb = thumbnails[key];
           const thumbFile =
             thumb instanceof Blob
               ? new (window as any).File([thumb], "thumbnail.jpg", {
@@ -163,41 +264,85 @@ export default function UploadModal({
           formData.append("thumbnail", thumbFile);
         }
 
-        const token = localStorage.getItem("token");
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
+        const uploadSingleFile = () => {
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            const startTime = Date.now();
+            let lastLoaded = 0;
+            let lastTime = startTime;
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          const detailedError = errorData.details
-            ? `${errorData.error}: ${errorData.details}`
-            : errorData.error || `Upload failed for ${file.name}`;
-          throw new Error(detailedError);
-        }
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const currentTime = Date.now();
+                const elapsed = (currentTime - lastTime) / 1000;
 
-        const data = await res.json();
+                if (elapsed >= 0.5) {
+                  // Update speed every 500ms
+                  const bytesSent = event.loaded - lastLoaded;
+                  const currentSpeed = bytesSent / elapsed; // bytes per second
+                  setUploadSpeed(currentSpeed);
+
+                  const remainingBytes = event.total - event.loaded;
+                  setEstimatedTime(remainingBytes / currentSpeed);
+
+                  lastLoaded = event.loaded;
+                  lastTime = currentTime;
+                }
+
+                // File progress is 0-90% of the total, the rest is DB entry
+                const fileProgress = (event.loaded / event.total) * 90;
+                const overallProgress =
+                  (i / files.length) * 100 + fileProgress / files.length;
+                setUploadProgress(overallProgress);
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(JSON.parse(xhr.responseText));
+              } else {
+                try {
+                  const errorData = JSON.parse(xhr.responseText);
+                  reject(
+                    new Error(
+                      errorData.error || `Upload failed for ${file.name}`,
+                    ),
+                  );
+                } catch {
+                  reject(new Error(`Upload failed for ${file.name}`));
+                }
+              }
+            };
+
+            xhr.onerror = () =>
+              reject(new Error("Network connection error during upload"));
+
+            xhr.open("POST", "/api/upload");
+            xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+            xhr.setRequestHeader("x-user-data", userData);
+            xhr.send(formData);
+          });
+        };
+
+        const data: any = await uploadSingleFile();
         uploadedFiles.push({
           ...data,
           index: i,
           file,
-          isCustomThumbnail: isCustomThumb[i] || false,
+          isCustomThumbnail: isCustomThumb[getFileKey(file)] || false,
+          thumbnailPublicId: data.thumbnailPublicId,
         });
-        setUploadProgress(10 + (30 * (i + 1)) / files.length);
       }
 
+      // Phase 2: Create Media Entries (DB)
       for (const uploadedFile of uploadedFiles) {
         for (const targetFolderId of selectedFolderIds) {
-          const token = localStorage.getItem("token");
           const res = await fetch("/api/media", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
+              "x-user-data": userData,
             },
             body: JSON.stringify({
               folderId: targetFolderId,
@@ -208,19 +353,21 @@ export default function UploadModal({
                 : "video",
               fileFormat: uploadedFile.file.name.split(".").pop(),
               fileSize: uploadedFile.file.size,
+              storageType: storageType,
+              publicId: uploadedFile.publicId,
               cdnUrl: uploadedFile.cdnUrl,
               storagePath: uploadedFile.cdnUrl,
               thumbnailUrl: uploadedFile.thumbnailUrl,
               isCustomThumbnail: uploadedFile.isCustomThumbnail,
+              metadata: {
+                thumbnailPublicId: uploadedFile.thumbnailPublicId,
+              },
             }),
           });
 
           if (!res.ok) {
             const errorData = await res.json();
-            const detailedError = errorData.details
-              ? `${errorData.error}: ${errorData.details}`
-              : errorData.error || "Failed to create media entry";
-            throw new Error(detailedError);
+            throw new Error(errorData.error || "Failed to create media entry");
           }
         }
       }
@@ -238,6 +385,9 @@ export default function UploadModal({
       );
     } finally {
       setIsUploading(false);
+      // Clean up object URLs on success
+      Object.values(objectUrls).forEach((url) => URL.revokeObjectURL(url));
+      setObjectUrls({});
     }
   };
 
@@ -268,7 +418,14 @@ export default function UploadModal({
             </span>
           )}
           <button
-            onClick={onClose}
+            onClick={() => {
+              onClose();
+              // Explicitly clean up URLs when closing
+              Object.values(objectUrls).forEach((url) =>
+                URL.revokeObjectURL(url),
+              );
+              setObjectUrls({});
+            }}
             className="p-2 rounded-full hover:bg-white/5 text-slate-400 transition-colors"
           >
             <X className="h-5 w-5" />
@@ -342,93 +499,121 @@ export default function UploadModal({
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
-                  {files.map((file, i) => (
-                    <div
-                      key={i}
-                      className="group flex flex-col gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 overflow-hidden border border-white/5">
-                          {file.type.startsWith("image") ? (
-                            <img
-                              src={URL.createObjectURL(file)}
-                              className="w-full h-full object-cover"
-                              alt="preview"
-                            />
-                          ) : thumbnails[i] ? (
-                            <img
-                              src={URL.createObjectURL(
-                                thumbnails[i] instanceof Blob
-                                  ? (thumbnails[i] as Blob)
-                                  : (thumbnails[i] as unknown as File),
-                              )}
-                              className="w-full h-full object-cover"
-                              alt="thumb"
-                            />
-                          ) : (
-                            <Film className="h-6 w-6 text-indigo-400" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <input
-                            className="bg-transparent border-none text-sm font-bold text-white w-full focus:ring-0 p-0"
-                            value={customFileNames[i] || file.name}
-                            onChange={(e) =>
-                              setCustomFileNames((prev) => ({
-                                ...prev,
-                                [i]: e.target.value,
-                              }))
-                            }
-                          />
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">
-                            {(file.size / (1024 * 1024)).toFixed(2)} MB •{" "}
-                            {file.type.split("/")[1]}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            setFiles(files.filter((_, idx) => idx !== i))
-                          }
-                          className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/5 rounded-lg text-slate-500 hover:text-red-400 transition-all"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-
-                      {file.type.startsWith("video") && (
-                        <div className="flex items-center justify-between pl-16">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded",
-                                isCustomThumb[i]
-                                  ? "bg-amber-500/10 text-amber-500"
-                                  : "bg-indigo-500/10 text-indigo-400",
-                              )}
-                            >
-                              {isCustomThumb[i]
-                                ? "Custom Thumbnail"
-                                : "Auto-generated"}
-                            </span>
+                  {files.map((file, i) => {
+                    const fileKey = getFileKey(file);
+                    const thumbnail = thumbnails[fileKey];
+                    return (
+                      <div
+                        key={fileKey}
+                        className="group flex flex-col gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            onClick={() => {
+                              setPreviewFile(file);
+                              setIsPreviewLoading(true);
+                            }}
+                            className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 overflow-hidden border border-white/5 cursor-pointer hover:border-indigo-500/50 transition-all relative group/thumb"
+                          >
+                            {file.type.startsWith("image") ? (
+                              (() => {
+                                const url = getFileUrl(file);
+                                return url ? (
+                                  <img
+                                    src={url}
+                                    className="w-full h-full object-cover"
+                                    alt="preview"
+                                  />
+                                ) : (
+                                  <ImageIcon className="h-6 w-6 text-indigo-400" />
+                                );
+                              })()
+                            ) : (
+                              <>
+                                {(() => {
+                                  const url = getFileUrl(
+                                    thumbnail,
+                                    `thumb-${fileKey}`,
+                                  );
+                                  return url ? (
+                                    <img
+                                      src={url}
+                                      className="w-full h-full object-cover"
+                                      alt="thumb"
+                                    />
+                                  ) : (
+                                    <Film className="h-6 w-6 text-indigo-400" />
+                                  );
+                                })()}
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                                  <Play className="h-4 w-4 text-white fill-white" />
+                                </div>
+                              </>
+                            )}
                           </div>
-                          <label className="cursor-pointer">
+                          <div className="flex-1 min-w-0">
                             <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*"
-                              onChange={(e) => handleCustomThumbUpload(i, e)}
+                              className="bg-transparent border-none text-sm font-bold text-white w-full focus:ring-0 p-0"
+                              value={customFileNames[fileKey] || file.name}
+                              onChange={(e) =>
+                                setCustomFileNames((prev) => ({
+                                  ...prev,
+                                  [fileKey]: e.target.value,
+                                }))
+                              }
                             />
-                            <span className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
-                              <Plus className="h-3 w-3" />
-                              {isCustomThumb[i]
-                                ? "Change Image"
-                                : "Upload Custom"}
-                            </span>
-                          </label>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase">
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB •{" "}
+                              {file.type.split("/")[1]}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() =>
+                              setFiles(files.filter((_, idx) => idx !== i))
+                            }
+                            className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/5 rounded-lg text-slate-500 hover:text-red-400 transition-all"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {file.type.startsWith("video") && (
+                          <div className="flex items-center justify-between pl-16">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded",
+                                  isCustomThumb[fileKey]
+                                    ? "bg-amber-500/10 text-amber-500"
+                                    : "bg-indigo-500/10 text-indigo-400",
+                                )}
+                              >
+                                {isCustomThumb[fileKey]
+                                  ? "Custom Thumbnail"
+                                  : "Auto-generated"}
+                              </span>
+                            </div>
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleCustomThumbUpload(fileKey, e)
+                                }
+                              />
+                              <span className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+                                <Plus className="h-3 w-3" />
+                                {isCustomThumb[fileKey]
+                                  ? "Change Image"
+                                  : "Upload Custom"}
+                              </span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -438,7 +623,33 @@ export default function UploadModal({
         {/* Right Panel: Configuration & Destination */}
         <div className="w-96 bg-slate-950 p-10 flex flex-col space-y-8 h-full">
           <div className="space-y-2">
-            <h3 className="text-lg font-bold text-white">Destination</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Destination</h3>
+              <div className="flex bg-white/5 p-1 rounded-lg">
+                <button
+                  onClick={() => setStorageType("local")}
+                  className={cn(
+                    "px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all",
+                    storageType === "local"
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : "text-slate-500 hover:text-white",
+                  )}
+                >
+                  Local
+                </button>
+                <button
+                  onClick={() => setStorageType("google-drive")}
+                  className={cn(
+                    "px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all",
+                    storageType === "google-drive"
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : "text-slate-500 hover:text-white",
+                  )}
+                >
+                  Drive
+                </button>
+              </div>
+            </div>
             <p className="text-xs text-slate-500">
               Choose where to route these assets.
             </p>
@@ -503,18 +714,37 @@ export default function UploadModal({
 
           <div className="pt-6 border-t border-white/5 space-y-6">
             {isUploading ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                  <span className="text-slate-400">Processing Stream</span>
-                  <span className="text-indigo-400">
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                      Processing Stream
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-indigo-400">
+                        {(uploadSpeed / (1024 * 1024)).toFixed(2)} MB/s
+                      </span>
+                      <div className="w-1 h-1 rounded-full bg-slate-800" />
+                      <span className="text-[10px] font-bold text-slate-500">
+                        {estimatedTime !== null
+                          ? estimatedTime > 60
+                            ? `${Math.floor(estimatedTime / 60)}m ${Math.round(estimatedTime % 60)}s remaining`
+                            : `${Math.round(estimatedTime)}s remaining`
+                          : "Calculating..."}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-black text-indigo-500 tabular-nums">
                     {Math.round(uploadProgress)}%
                   </span>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
                   <div
-                    className="h-full bg-indigo-500 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-full transition-all duration-300 relative"
                     style={{ width: `${uploadProgress}%` }}
-                  />
+                  >
+                    <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -543,6 +773,76 @@ export default function UploadModal({
           </div>
         </div>
       </div>
+
+      {/* Preview Modal Overlay */}
+      {previewFile && (
+        <div className="fixed inset-0 z-[110] bg-black/95 flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
+          <div className="absolute top-8 right-8 flex items-center gap-3 z-[120]">
+            <button
+              onClick={() => handleRemoveFromPreview(previewFile)}
+              className="p-3 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all border border-red-500/20"
+              title="Remove from queue"
+            >
+              <Trash2 className="h-6 w-6" />
+            </button>
+            <button
+              onClick={closePreview}
+              className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="max-w-5xl w-full aspect-video flex items-center justify-center relative bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+            {isPreviewLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
+                <Loader2 className="h-12 w-12 text-indigo-500 animate-spin mb-4" />
+                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                  Loading Preview...
+                </p>
+              </div>
+            )}
+
+            {(() => {
+              const url = getFileUrl(previewFile);
+              if (!url) return null;
+
+              return previewFile.type.startsWith("video") ? (
+                <video
+                  key={`${previewFile.name}-${previewFile.size}`}
+                  src={url}
+                  className="w-full h-full object-contain"
+                  controls
+                  autoPlay
+                  onCanPlay={() => setIsPreviewLoading(false)}
+                  onLoadedData={() => setIsPreviewLoading(false)}
+                  onError={() => setIsPreviewLoading(false)}
+                />
+              ) : (
+                <img
+                  key={`${previewFile.name}-${previewFile.size}`}
+                  src={url}
+                  className="max-w-full max-h-full object-contain"
+                  alt="Preview"
+                  onLoad={() => setIsPreviewLoading(false)}
+                  onError={() => setIsPreviewLoading(false)}
+                />
+              );
+            })()}
+          </div>
+
+          <div className="mt-8 text-center space-y-2">
+            <h3 className="text-2xl font-bold text-white tracking-tight">
+              {previewFile.name}
+            </h3>
+            <p className="text-xs text-slate-500 uppercase font-black tracking-widest flex items-center justify-center gap-3">
+              <span>{(previewFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              <span>Pre-upload Review</span>
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

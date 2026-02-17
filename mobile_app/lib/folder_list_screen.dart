@@ -16,12 +16,52 @@ class FolderListScreen extends StatefulWidget {
 class _FolderListScreenState extends State<FolderListScreen> {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
-  late Future<List<Folder>> _foldersFuture;
+  final List<Folder> _folders = [];
+  bool _isLoading = false;
+  int _currentPage = 1;
+  int _totalPages = 1;
 
   @override
   void initState() {
     super.initState();
-    _foldersFuture = _apiService.getFolders();
+    _fetchFolders();
+  }
+
+  Future<void> _fetchFolders() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiService.getFolders(
+        page: _currentPage,
+        limit: 10,
+      );
+
+      setState(() {
+        _folders.addAll(response.data);
+        _totalPages = response.pagination.totalPages;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading folders: $e')),
+        );
+      }
+    }
+  }
+
+  void _loadMore() {
+    if (_currentPage < _totalPages && !_isLoading) {
+      _currentPage++;
+      _fetchFolders();
+    }
   }
 
   void _handleLogout() async {
@@ -36,8 +76,9 @@ class _FolderListScreenState extends State<FolderListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: const Text('DS Gallery'),
+        title: const Text('Collections'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         actions: [
@@ -48,59 +89,72 @@ class _FolderListScreenState extends State<FolderListScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Folder>>(
-        future: _foldersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No folders found'));
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification scrollInfo) {
+          if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+            _loadMore();
           }
-
-          final folders = snapshot.data!;
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: folders.length,
-            itemBuilder: (context, index) {
-              final folder = folders[index];
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  title: Text(
-                    folder.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (folder.description != null)
-                        Text(folder.description!, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${folder.mediaCount} items • ${DateFormat.yMMMd().format(folder.createdAt)}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          return false;
+        },
+        child: _folders.isEmpty && _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _folders.length + (_isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index < _folders.length) {
+                    final folder = _folders[index];
+                    return Card(
+                      color: Colors.white.withOpacity(0.05),
+                      elevation: 0,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Colors.white10),
                       ),
-                    ],
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MediaGridScreen(folder: folder),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.folder_copy, color: Colors.indigoAccent),
+                        ),
+                        title: Text(
+                          folder.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${folder.mediaCount} assets • ${folder.productCategory ?? "General"}',
+                          style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.blueGrey),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MediaGridScreen(folder: folder),
+                            ),
+                          );
+                        },
                       ),
                     );
-                  },
-                ),
-              );
-            },
-          );
-        },
+                  } else {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                },
+              ),
       ),
     );
   }

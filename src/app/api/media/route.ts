@@ -10,12 +10,15 @@ import fs from "fs";
 import path from "path";
 
 export async function GET(request: Request) {
-  if (!verifyAuth(request)) return unauthorizedResponse();
+  if (!verifyAuth(request)) return unauthorizedResponse(request);
   try {
     const { searchParams } = new URL(request.url);
     const folderIds = searchParams.get("folderIds")?.split(",").filter(Boolean);
     const type = searchParams.get("type"); // image | video
     const query = searchParams.get("q");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "12");
+    const skip = (page - 1) * limit;
 
     const where: any = {};
     if (folderIds && folderIds.length > 0) {
@@ -29,15 +32,28 @@ export async function GET(request: Request) {
       ];
     }
 
-    const media = await prisma.media.findMany({
-      where,
-      include: {
-        folder: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const [media, total] = await Promise.all([
+      prisma.media.findMany({
+        where,
+        include: {
+          folder: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.media.count({ where }),
+    ]);
 
-    return NextResponse.json(media);
+    return NextResponse.json({
+      data: media,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error: any) {
     console.error("Error fetching media:", error);
     return NextResponse.json(
@@ -52,7 +68,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!verifyAuth(request)) return unauthorizedResponse();
+  if (!verifyAuth(request)) return unauthorizedResponse(request);
   const sessionUser = getAuthenticatedUser(request);
   try {
     const body = await request.json();
@@ -85,6 +101,8 @@ export async function POST(request: Request) {
           fileFormat: body.fileFormat || "unknown",
           fileSize: body.fileSize ? Math.floor(Number(body.fileSize)) : 0,
           storagePath: body.storagePath || body.cdnUrl || "unknown",
+          storageType: body.storageType || "local",
+          publicId: body.publicId || null,
           cdnUrl: body.cdnUrl || "unknown",
           thumbnailUrl: body.thumbnailUrl || null,
           isCustomThumbnail: body.isCustomThumbnail || false,

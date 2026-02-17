@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { verifyAuth, unauthorizedResponse } from "@/lib/auth";
 
 export async function GET(request: Request) {
-  if (!verifyAuth(request)) return unauthorizedResponse();
+  if (!verifyAuth(request)) return unauthorizedResponse(request);
   try {
     // 1. Basic counts
     const totalMedia = await prisma.media.count();

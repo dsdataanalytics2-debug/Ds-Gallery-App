@@ -38,8 +38,12 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const storageType = (fields.storageType || "local") as
+      | "local"
+      | "google-drive";
+
     // Upload using storage provider
-    const storage = getStorageProvider();
+    const storage = await getStorageProvider(storageType);
     const result = await storage.upload(buffer, {
       fileName,
       fileType,
@@ -54,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Handle optional thumbnail if provided (Local storage fallback)
     let finalThumbnailUrl = result.thumbnailUrl;
+    let thumbnailPublicId = undefined;
 
     if (files.thumbnail && files.thumbnail.length > 0) {
       const thumbFile = files.thumbnail[0] as File;
@@ -64,6 +69,7 @@ export async function POST(request: NextRequest) {
       });
       if (thumbResult.success) {
         finalThumbnailUrl = thumbResult.cdnUrl;
+        thumbnailPublicId = thumbResult.publicId;
       }
     }
 
@@ -73,11 +79,14 @@ export async function POST(request: NextRequest) {
       cdnUrl: result.cdnUrl,
       thumbnailUrl: finalThumbnailUrl,
       publicId: result.publicId,
+      thumbnailPublicId: thumbnailPublicId,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Upload error:", error);
+    console.error("Error stack:", error?.stack);
+    console.error("Error message:", error?.message);
     return NextResponse.json(
-      { error: "Failed to upload file" },
+      { error: error?.message || "Failed to upload file" },
       { status: 500 },
     );
   }

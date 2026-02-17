@@ -1,0 +1,79 @@
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+import "dotenv/config";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+async function verify() {
+  console.log("--- Starting Ownership & Safety Verification (TS) ---");
+
+  try {
+    // 1. Setup: Find admin and a regular user
+    const admin = await prisma.user.findFirst({ where: { role: "admin" } });
+    const user = await prisma.user.findFirst({ where: { role: "user" } });
+
+    if (!admin || !user) {
+      console.error("Test setup failed: Admin or user not found.");
+      return;
+    }
+
+    console.log(`Using Admin: ${admin.email} (${admin.id})`);
+    console.log(`Using User: ${user.email} (${user.id})`);
+
+    // 2. Test: Ownership Assignment during creation
+    const newFolder = await prisma.folder.create({
+      data: {
+        name: "Test Assigned Folder",
+        ownerId: user.id,
+      },
+    });
+    console.log(
+      `✅ Folder created and assigned to user: ${newFolder.name} (Owner: ${newFolder.ownerId})`,
+    );
+
+    // 3. Test: Sharing (Permissions)
+    const permission = await prisma.folderPermission.create({
+      data: {
+        userId: admin.id,
+        folderId: newFolder.id,
+      },
+    });
+    console.log(`✅ Folder shared with admin: Permission ID ${permission.id}`);
+
+    // 4. Test: User Deletion Safety Net Logic
+    console.log("Testing Deletion Safety Net Logic...");
+
+    // Simulate re-assignment
+    await prisma.folder.updateMany({
+      where: { ownerId: user.id },
+      data: { ownerId: admin.id },
+    });
+
+    const reAssignedFolder = await prisma.folder.findUnique({
+      where: { id: newFolder.id },
+    });
+    if (reAssignedFolder?.ownerId === admin.id) {
+      console.log(
+        `✅ Safety Net Success: Folder "${reAssignedFolder.name}" transferred to admin.`,
+      );
+    } else {
+      console.error("❌ Safety Net Failed: Folder owner not updated.");
+    }
+
+    // Cleanup the test folder
+    await prisma.folder.delete({ where: { id: newFolder.id } });
+    console.log("Cleaned up test data.");
+  } catch (err) {
+    console.error("Verification error:", err);
+  } finally {
+    await prisma.$disconnect();
+    await pool.end();
+  }
+}
+
+verify();

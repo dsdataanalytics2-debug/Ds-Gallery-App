@@ -6,6 +6,7 @@ import {
   getAuthenticatedUser,
 } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
+import { hasFolderAccess } from "@/lib/permission";
 
 export async function GET(
   request: Request,
@@ -25,11 +26,19 @@ export async function GET(
       return NextResponse.json({ error: "Media not found" }, { status: 404 });
     }
 
+    if (!sessionUser) return unauthorizedResponse();
+
+    // Check permission
+    const allowed = await hasFolderAccess(sessionUser.id, media.folderId);
+    if (!allowed) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     // Log the download activity
     if (sessionUser) {
       await logActivity({
-        userId: sessionUser.id,
-        userName: sessionUser.name,
+        userId: sessionUser!.id,
+        userName: sessionUser!.name,
         action: "DOWNLOAD",
         mediaId: media.id,
         mediaName: media.fileName,

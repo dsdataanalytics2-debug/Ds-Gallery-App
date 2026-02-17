@@ -49,6 +49,10 @@ export default function MediaPreviewDrawer({
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadSpeed, setDownloadSpeed] = useState(0);
+  const [downloadEta, setDownloadEta] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -90,6 +94,7 @@ export default function MediaPreviewDrawer({
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
         },
         body: formData,
       });
@@ -103,6 +108,36 @@ export default function MediaPreviewDrawer({
     } catch (error) {
       console.error("Error updating thumbnail:", error);
       alert("An error occurred while updating the thumbnail");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (
+      !media ||
+      !confirm("Are you sure you want to permanently delete this asset?")
+    )
+      return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/media/${media.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
+
+      if (res.ok) {
+        onClose();
+        router.refresh();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete asset");
+      }
+    } catch (error) {
+      console.error("Error deleting asset:", error);
+      alert("An error occurred while deleting the asset");
     }
   };
 
@@ -129,6 +164,72 @@ export default function MediaPreviewDrawer({
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const handleDownload = async () => {
+    if (!media) return;
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setDownloadSpeed(0);
+    setDownloadEta(null);
+
+    try {
+      const response = await fetch(media.cdnUrl);
+      if (!response.ok) throw new Error("Download failed");
+
+      const contentLength = response.headers.get("content-length");
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("Failed to initialize stream reader");
+
+      let receivedLength = 0;
+      const chunks = [];
+      const startTime = Date.now();
+      let lastTime = startTime;
+      let lastReceived = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        receivedLength += value.length;
+
+        const currentTime = Date.now();
+        const elapsed = (currentTime - lastTime) / 1000;
+
+        if (elapsed >= 0.5) {
+          const deltaBytes = receivedLength - lastReceived;
+          const speed = deltaBytes / elapsed;
+          setDownloadSpeed(speed);
+
+          if (total) {
+            const remaining = total - receivedLength;
+            setDownloadEta(remaining / speed);
+            setDownloadProgress((receivedLength / total) * 100);
+          }
+
+          lastTime = currentTime;
+          lastReceived = receivedLength;
+        }
+      }
+
+      const blob = new Blob(chunks);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = media.fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download Error:", error);
+      alert("Failed to download file. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -184,7 +285,11 @@ export default function MediaPreviewDrawer({
                 )}
                 <video
                   ref={videoRef}
-                  src={media.cdnUrl}
+                  src={
+                    media.storageType === "google-drive"
+                      ? `/api/media/${media.id}/proxy?token=${localStorage.getItem("token")}`
+                      : media.cdnUrl
+                  }
                   className="w-full h-full object-contain"
                   onLoadStart={() => setIsLoading(true)}
                   onCanPlay={() => setIsLoading(false)}
@@ -328,21 +433,35 @@ export default function MediaPreviewDrawer({
             {/* Action Grid */}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = media.cdnUrl;
-                  link.download = media.fileName;
-                  link.click();
-                }}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-white transition-all group"
+                disabled={isDownloading}
+                onClick={handleDownload}
+                className={cn(
+                  "flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-white transition-all group relative overflow-hidden",
+                  isDownloading && "border-indigo-500/50 bg-indigo-500/10",
+                )}
               >
-                <Download className="h-5 w-5 group-hover:text-indigo-400" />
+                {isDownloading && (
+                  <div
+                    className="absolute bottom-0 left-0 h-1 bg-indigo-500 transition-all duration-300"
+                    style={{ width: `${downloadProgress}%` }}
+                  />
+                )}
+                <Download
+                  className={cn(
+                    "h-5 w-5 group-hover:text-indigo-400",
+                    isDownloading && "animate-bounce text-indigo-400",
+                  )}
+                />
                 <div className="text-left">
                   <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
-                    Download
+                    {isDownloading
+                      ? `${Math.round(downloadProgress)}%`
+                      : "Download"}
                   </p>
                   <p className="text-[9px] text-slate-600 font-bold">
-                    Save to device
+                    {isDownloading
+                      ? `${(downloadSpeed / (1024 * 1024)).toFixed(1)} MB/s`
+                      : "Save to device"}
                   </p>
                 </div>
               </button>
@@ -408,7 +527,10 @@ export default function MediaPreviewDrawer({
                 </label>
               )}
 
-              <button className="col-span-2 flex items-center justify-center gap-3 p-3.5 rounded-xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:border-red-500/20 text-red-400 transition-all group">
+              <button
+                onClick={handleDelete}
+                className="col-span-2 flex items-center justify-center gap-3 p-3.5 rounded-xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:border-red-500/20 text-red-400 transition-all group"
+              >
                 <Trash2 className="h-5 w-5 group-hover:animate-bounce" />
                 <div className="text-left">
                   <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">

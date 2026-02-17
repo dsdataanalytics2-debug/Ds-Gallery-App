@@ -48,6 +48,7 @@ export default function AddUserModal({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           "x-user-role": adminUser.role,
+          "x-user-data": localStorage.getItem("user") || "",
         },
         body: JSON.stringify(formData),
       });

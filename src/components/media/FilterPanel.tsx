@@ -39,22 +39,27 @@ export default function FilterPanel({
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch("/api/folders", {
+    // We fetch a larger limit for the filter panel to ensure the user can select from many collections
+    fetch("/api/folders?limit=100&recursive=true", {
       headers: {
         Authorization: `Bearer ${token}`,
+        "x-user-data": localStorage.getItem("user") || "",
       },
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setFolders(data);
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then((result) => {
+        if (result && Array.isArray(result.data)) {
+          setFolders(result.data);
         } else {
-          console.error("Expected folders array but got:", data);
+          console.warn("Unexpected folders format in FilterPanel:", result);
           setFolders([]);
         }
       })
       .catch((err) => {
-        console.error("Failed to fetch folders:", err);
+        console.error("Failed to fetch folders in FilterPanel:", err);
         setFolders([]);
       });
   }, []);

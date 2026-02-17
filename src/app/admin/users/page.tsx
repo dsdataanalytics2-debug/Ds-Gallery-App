@@ -24,6 +24,10 @@ interface User {
   name: string | null;
   role: string;
   createdAt: string;
+  _count?: {
+    ownedFolders: number;
+    permissions: number;
+  };
 }
 
 export default function UserManagementPage() {
@@ -48,6 +52,7 @@ export default function UserManagementPage() {
         headers: {
           Authorization: `Bearer ${token}`,
           "x-user-role": user.role,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
 
@@ -78,6 +83,7 @@ export default function UserManagementPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           "x-user-role": adminUser.role,
+          "x-user-data": localStorage.getItem("user") || "",
         },
         body: JSON.stringify({ role: newRole }),
       });
@@ -110,6 +116,7 @@ export default function UserManagementPage() {
         headers: {
           Authorization: `Bearer ${token}`,
           "x-user-role": adminUser.role,
+          "x-user-data": localStorage.getItem("user") || "",
         },
       });
 
@@ -239,6 +246,12 @@ export default function UserManagementPage() {
                   Role
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Collections
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Shared
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-left">
                   Joined Date
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">
@@ -328,6 +341,12 @@ export default function UserManagementPage() {
                           </button>
                         </div>
                       )}
+                    </td>
+                    <td className="px-6 py-5 text-sm text-slate-400 font-medium whitespace-nowrap">
+                      {user._count?.ownedFolders || 0}
+                    </td>
+                    <td className="px-6 py-5 text-sm text-slate-400 font-medium whitespace-nowrap">
+                      {user._count?.permissions || 0}
                     </td>
                     <td className="px-6 py-5 text-sm text-slate-400 font-medium whitespace-nowrap">
                       {new Date(user.createdAt).toLocaleDateString()}

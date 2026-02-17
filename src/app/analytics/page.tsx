@@ -24,7 +24,13 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch("/api/analytics");
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/analytics", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-user-data": localStorage.getItem("user") || "",
+          },
+        });
         if (res.ok) {
           const json = await res.json();
           setData(json);

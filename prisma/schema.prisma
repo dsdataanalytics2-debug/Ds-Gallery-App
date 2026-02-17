@@ -7,14 +7,20 @@ datasource db {
 }
 
 model Folder {
-  id              String   @id @default(cuid())
+  id              String             @id @default(cuid())
   name            String
   description     String?
   tags            String[]
   productCategory String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
   media           Media[]
+  parentId        String?
+  parent          Folder?            @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children        Folder[]           @relation("FolderHierarchy")
+  ownerId         String?
+  owner           User?              @relation("UserFolders", fields: [ownerId], references: [id])
+  permissions     FolderPermission[]
 }
 
 model Media {
@@ -25,6 +31,8 @@ model Media {
   fileFormat        String
   fileSize          Int
   storagePath       String
+  storageType       String   @default("local") // "local" | "google-drive"
+  publicId          String?
   cdnUrl            String
   thumbnailUrl      String?
   tags              String[]
@@ -36,14 +44,16 @@ model Media {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  password  String
-  name      String?
-  role      String     @default("user")
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  logs      AuditLog[]
+  id          String             @id @default(cuid())
+  email       String             @unique
+  password    String
+  name        String?
+  role        String             @default("user")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  logs        AuditLog[]
+  ownedFolders Folder[]           @relation("UserFolders")
+  permissions FolderPermission[]
 }
 
 model AuditLog {
@@ -58,4 +68,26 @@ model AuditLog {
   folderName String?
   timestamp  DateTime @default(now())
   user       User     @relation(fields: [userId], references: [id])
+}
+
+model GoogleOAuthToken {
+  id           String   @id @default(cuid())
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  expiresAt    DateTime
+  scope        String?
+  tokenType    String   @default("Bearer")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model FolderPermission {
+  id        String   @id @default(cuid())
+  userId    String
+  folderId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder    Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, folderId])
 }

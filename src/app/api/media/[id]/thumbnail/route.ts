@@ -32,7 +32,7 @@ export async function PATCH(
     // Upload to set storage provider
     const arrayBuffer = await thumbnailFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const storage = getStorageProvider();
+    const storage = await getStorageProvider();
 
     // Use the original filename or similar for the thumbnail
     const result = await storage.upload(buffer, {

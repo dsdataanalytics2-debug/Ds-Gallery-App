@@ -22,6 +22,12 @@ export async function GET(request: Request) {
         name: true,
         role: true,
         createdAt: true,
+        _count: {
+          select: {
+            ownedFolders: true,
+            permissions: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
