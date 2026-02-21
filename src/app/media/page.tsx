@@ -116,7 +116,7 @@ export default function AllMediaPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-bold border border-indigo-500/20 w-fit">
-          <Sparkles className="h-3 w-3" />
+          <img src="/logo-v2.jpg" className="h-3 w-3 object-contain" alt="" />
           <span>Centralized Asset Intelligence</span>
         </div>
         <h1 className="text-4xl font-bold tracking-tight text-white">

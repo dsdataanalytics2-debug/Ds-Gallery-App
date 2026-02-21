@@ -9,6 +9,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "DS Gallery | Media Management",
   description: "Centralized media management platform for office products",
+  icons: {
+    icon: "/logo-v2.jpg",
+    shortcut: "/logo-v2.jpg",
+    apple: "/logo-v2.jpg",
+  },
 };
 
 export default function RootLayout({

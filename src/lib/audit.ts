@@ -1,6 +1,11 @@
 import prisma from "./prisma";
 
-export type AuditAction = "UPLOAD" | "DELETE" | "DOWNLOAD";
+export type AuditAction =
+  | "UPLOAD"
+  | "DELETE"
+  | "DOWNLOAD"
+  | "REPLACE"
+  | "RENAME";
 
 interface AuditLogParams {
   userId: string;

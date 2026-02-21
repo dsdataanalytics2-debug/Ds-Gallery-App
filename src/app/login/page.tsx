@@ -43,13 +43,18 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Premium Media Management</span>
+          <div className="flex justify-center mb-8">
+            <div className="w-32 h-32 relative">
+              <img
+                src="/logo-v2.jpg"
+                alt="Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white italic">
-            DS GALLERY
-          </h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20 uppercase tracking-widest">
+            Premium Media Management
+          </div>
           <p className="text-slate-400 text-sm">
             Please enter your credentials to access the secure portal
           </p>

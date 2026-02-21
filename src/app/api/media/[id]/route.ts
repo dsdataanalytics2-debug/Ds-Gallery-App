@@ -103,3 +103,86 @@ export async function DELETE(
     );
   }
 }
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!verifyAuth(request)) return unauthorizedResponse();
+  const sessionUser = getAuthenticatedUser(request);
+
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    const existing = await prisma.media.findUnique({
+      where: { id },
+      include: { folder: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Media not found" }, { status: 404 });
+    }
+
+    // Logic: If new storage details are provided, it's a "Replace" operation
+    // We should delete the old file from storage if it's changing
+    if (body.storageFileId && body.storageFileId !== existing.storageFileId) {
+      try {
+        const storageProvider = await getStorageProvider(existing.storageType);
+        const oldFileId = existing.storageFileId || existing.storagePath;
+        if (oldFileId) {
+          console.log(
+            `Replacing: Deleting old file from ${existing.storageType}:`,
+            oldFileId,
+          );
+          await storageProvider.delete(oldFileId);
+        }
+      } catch (e) {
+        console.error("Cleanup of old file failed during replacement:", e);
+        // Continue anyway to update the record
+      }
+    }
+
+    const updated = await prisma.media.update({
+      where: { id },
+      data: {
+        fileName: body.fileName ?? existing.fileName,
+        fileFormat: body.fileFormat ?? existing.fileFormat,
+        fileSize: body.fileSize
+          ? Math.floor(Number(body.fileSize))
+          : existing.fileSize,
+        cdnUrl: body.cdnUrl ?? existing.cdnUrl,
+        storagePath: body.cdnUrl ?? existing.storagePath,
+        storageFileId: body.storageFileId ?? existing.storageFileId,
+        storageType: body.storageType ?? existing.storageType,
+        thumbnailUrl: body.thumbnailUrl ?? existing.thumbnailUrl,
+        isCustomThumbnail: body.isCustomThumbnail ?? existing.isCustomThumbnail,
+        metadata: {
+          ...(existing.metadata as any),
+          ...(body.metadata || {}),
+        },
+      },
+    });
+
+    if (sessionUser) {
+      await logActivity({
+        userId: sessionUser.id,
+        userName: sessionUser.name,
+        action: "REPLACE",
+        mediaId: updated.id,
+        mediaName: updated.fileName,
+        fileType: updated.fileType,
+        folderId: updated.folderId,
+        folderName: existing.folder.name,
+      });
+    }
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Error updating/replacing media:", error);
+    return NextResponse.json(
+      { error: "Failed to update asset", details: (error as Error).message },
+      { status: 500 },
+    );
+  }
+}

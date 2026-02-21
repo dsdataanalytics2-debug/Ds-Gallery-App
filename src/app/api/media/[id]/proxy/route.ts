@@ -57,6 +57,62 @@ export async function GET(
 
     // Special handling for thumbnails
     if (isThumbnail) {
+      const metadata = media.metadata as any;
+      const customThumbnailId = metadata?.thumbnailPublicId;
+
+      if (customThumbnailId) {
+        try {
+          console.log(
+            `[Proxy] Fetching custom thumbnail from Drive: ${customThumbnailId}`,
+          );
+          const thumbResponse = await drive.files.get(
+            {
+              fileId: customThumbnailId,
+              alt: "media",
+              supportsAllDrives: true,
+            },
+            { responseType: "stream" },
+          );
+
+          const headers = new Headers();
+          headers.set("Content-Type", "image/jpeg");
+          headers.set("Cache-Control", "public, max-age=3600");
+
+          // Convert Node.js Readable to Web ReadableStream (DRY - used below too)
+          const nodeStream = thumbResponse.data as any;
+          const webStream = new ReadableStream({
+            start(controller) {
+              nodeStream.on("data", (chunk: Buffer | Uint8Array) => {
+                try {
+                  controller.enqueue(new Uint8Array(chunk));
+                } catch (e) {}
+              });
+              nodeStream.on("end", () => {
+                try {
+                  controller.close();
+                } catch (e) {}
+              });
+              nodeStream.on("error", (err: Error) => {
+                try {
+                  controller.error(err);
+                } catch (e) {}
+              });
+            },
+            cancel() {
+              nodeStream.destroy();
+            },
+          });
+
+          return new Response(webStream as any, {
+            status: 200,
+            headers,
+          });
+        } catch (thumbError) {
+          console.warn("[Proxy] Failed to fetch custom thumbnail:", thumbError);
+        }
+      }
+
+      // Fallback: Use Drive's auto-generated thumbnailLink
       try {
         const fileMetadata = await drive.files.get({
           fileId: fileId,
@@ -66,9 +122,6 @@ export async function GET(
 
         const thumbnailLink = fileMetadata.data.thumbnailLink;
         if (thumbnailLink) {
-          // GDrive thumbnails are served as temporary public URLs.
-          // We can redirect to them for efficiency, or fetch them if CORS is an issue.
-          // Let's fetch them to keep it truly 'proxied' and avoid CORS issues in the UI.
           const thumbRes = await fetch(thumbnailLink);
           if (thumbRes.ok) {
             const thumbBlob = await thumbRes.blob();
@@ -82,8 +135,10 @@ export async function GET(
           }
         }
       } catch (thumbError) {
-        console.warn("[Proxy] Failed to fetch GDrive thumbnail:", thumbError);
-        // Fallback to full file if thumbnail fails (though inefficient)
+        console.warn(
+          "[Proxy] Failed to fetch GDrive thumbnailLink:",
+          thumbError,
+        );
       }
     }
 

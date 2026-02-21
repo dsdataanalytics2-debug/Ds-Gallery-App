@@ -60,14 +60,13 @@ export default function Sidebar() {
       {/* Logo Section */}
       <div className="h-16 flex items-center px-6 border-b border-border">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 relative flex items-center justify-center group-hover:scale-110 transition-transform">
+            <img
+              src="/logo-v2.jpg"
+              alt="Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
-          {!isCollapsed && (
-            <span className="font-bold text-xl tracking-tight text-white">
-              DS Gallery
-            </span>
-          )}
         </Link>
       </div>
 

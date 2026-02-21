@@ -7,6 +7,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth";
 import { hasFolderAccess } from "@/lib/permission";
+import { logActivity } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   if (!verifyAuth(request)) return unauthorizedResponse();
@@ -90,6 +91,20 @@ export async function POST(request: NextRequest) {
             cdnUrl: result.url || item.cdnUrl,
           } as any,
         });
+
+        if (sessionUser) {
+          await logActivity({
+            userId: sessionUser.id,
+            userName: sessionUser.name,
+            action: "RENAME",
+            mediaId: updated.id,
+            mediaName: updated.fileName,
+            fileType: updated.fileType,
+            folderId: item.folderId,
+            folderName: (item as any).folder?.name || "Unknown",
+          });
+        }
+
         renamed.push(updated);
       } catch (prismaError: any) {
         console.error(

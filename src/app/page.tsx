@@ -139,7 +139,11 @@ export default function Home() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20">
-            <Sparkles className="h-3.5 w-3.5" />
+            <img
+              src="/logo-v2.jpg"
+              className="h-3.5 w-3.5 object-contain"
+              alt=""
+            />
             <span>Premium Media Management</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-white">

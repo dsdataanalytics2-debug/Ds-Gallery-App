@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Media } from "@/types";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import ReplaceMediaModal from "./ReplaceMediaModal";
 
 interface MediaPreviewDrawerProps {
   media: Media | null;
@@ -52,6 +53,7 @@ export default function MediaPreviewDrawer({
   const [downloadEta, setDownloadEta] = useState<number | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -59,7 +61,15 @@ export default function MediaPreviewDrawer({
       if (isPlaying) videoRef.current.play();
       else videoRef.current.pause();
     }
-  }, [isPlaying]);
+  }, [isPlaying, media?.id]); // Also restart on media change
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsPlaying(false);
+      setProgress(0);
+      setCurrentTime(0);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -77,6 +87,16 @@ export default function MediaPreviewDrawer({
 
   const handleTogglePlay = () => setIsPlaying(!isPlaying);
   const handleToggleMute = () => setIsMuted(!isMuted);
+
+  const handleReplaceSuccess = () => {
+    // We already onClose in the modal for a cleaner flow,
+    // but we need to signal the parent to refresh.
+    router.refresh();
+    // Since we are in a drawer, the media object might need re-fetching
+    // or the parent will re-open it if selectedAsset is kept.
+    // The simplest is to refresh and close.
+    onClose();
+  };
 
   const handleThumbnailChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -526,11 +546,7 @@ export default function MediaPreviewDrawer({
               </button>
 
               <button
-                onClick={() =>
-                  alert(
-                    "Replace feature: This will open the upload modal for this specific asset.",
-                  )
-                }
+                onClick={() => setIsReplaceModalOpen(true)}
                 className="flex items-center gap-3 p-3.5 rounded-xl bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 hover:border-indigo-500/20 text-indigo-400 transition-all group"
               >
                 <RefreshCcw className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -639,6 +655,13 @@ export default function MediaPreviewDrawer({
         message={`Are you sure you want to permanently delete "${media.fileName}"? This action cannot be undone.`}
         confirmLabel="Delete Asset"
         isLoading={isDeleting}
+      />
+
+      <ReplaceMediaModal
+        isOpen={isReplaceModalOpen}
+        media={media}
+        onClose={() => setIsReplaceModalOpen(false)}
+        onSuccess={handleReplaceSuccess}
       />
     </>
   );
