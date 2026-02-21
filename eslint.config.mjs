@@ -12,6 +12,15 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "mobile_app/**",
+    "debug*.js",
+    "debug*.ts",
+    "lint-errors.txt",
+    "verify-ownership.js",
+    "verify-ownership.ts",
+    "check-*.ts",
+    "test-*.ts",
+    "list-db-users.ts",
   ]),
 ]);
 

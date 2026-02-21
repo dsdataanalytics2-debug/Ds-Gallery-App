@@ -16,22 +16,24 @@ model Folder {
   updatedAt       DateTime           @updatedAt
   media           Media[]
   parentId        String?
-  parent          Folder?            @relation("FolderHierarchy", fields: [parentId], references: [id])
+  parent          Folder?            @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children        Folder[]           @relation("FolderHierarchy")
   ownerId         String?
   owner           User?              @relation("UserFolders", fields: [ownerId], references: [id])
+  isPublic        Boolean            @default(false)
   permissions     FolderPermission[]
 }
 
 model Media {
-  id                String   @id @default(cuid())
+  id                String   @id @default(uuid())
   folderId          String
   fileName          String
   fileType          String
   fileFormat        String
   fileSize          Int
-  storagePath       String
-  storageType       String   @default("local") // "local" | "google-drive"
+  storagePath       String   // To be migrated to storageFileId
+  storageType       String   @default("local") // local | gdrive
+  storageFileId     String   @default("")
   publicId          String?
   cdnUrl            String
   thumbnailUrl      String?
@@ -40,7 +42,7 @@ model Media {
   updatedAt         DateTime @updatedAt
   metadata          Json?
   isCustomThumbnail Boolean  @default(false)
-  folder            Folder   @relation(fields: [folderId], references: [id])
+  folder            Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
 }
 
 model User {

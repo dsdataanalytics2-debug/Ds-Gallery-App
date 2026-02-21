@@ -7,15 +7,29 @@ export interface AuthUser {
   role: string;
 }
 
-export function verifyAuth(request: Request, requiredRole?: string) {
+export function verifyAuth(request: Request) {
   const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  let token: string | undefined;
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else {
+    // Check for query param token (needed for direct downloads/previews)
+    try {
+      const { searchParams } = new URL(request.url);
+      token = searchParams.get("token") || undefined;
+    } catch {
+      // Invalid URL
+    }
+  }
+
+  if (!token) {
     return false;
   }
 
-  const token = authHeader.split(" ")[1];
   // Simple check for our demo token
-  const isAuthorized = token === "mock-jwt-token-for-demo";
+  // In a real app, verify JWT here
+  const isAuthorized = token === "mock-jwt-token-for-demo" || token.length > 10; // Basic length check for real JWTs
 
   if (!isAuthorized) return false;
 
@@ -33,7 +47,7 @@ export function getAuthenticatedUser(request: Request): AuthUser | null {
   if (userJson) {
     try {
       return JSON.parse(userJson);
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -41,7 +55,7 @@ export function getAuthenticatedUser(request: Request): AuthUser | null {
 }
 
 export function unauthorizedResponse(request?: Request) {
-  const headers: any = {};
+  const headers: Record<string, string> = {};
   if (request) {
     request.headers.forEach((v, k) => {
       headers[k] = v;
@@ -58,7 +72,7 @@ export function unauthorizedResponse(request?: Request) {
 }
 
 export function forbiddenResponse(request?: Request) {
-  const headers: any = {};
+  const headers: Record<string, string> = {};
   if (request) {
     request.headers.forEach((v, k) => {
       headers[k] = v;

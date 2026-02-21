@@ -57,6 +57,7 @@ export default function AllMediaPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      // Remove hardcoded publicOnly constraint to show all assets user has access to
       if (searchQuery) params.append("q", searchQuery);
       if (filter !== "all") params.append("type", filter);
       if (activeCollections.length > 0)

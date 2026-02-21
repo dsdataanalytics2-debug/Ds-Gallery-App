@@ -31,7 +31,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem("app-settings");
     if (saved) {
       try {
-        setSettings(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSettings(parsed);
       } catch (e) {
         console.error("Failed to parse settings", e);
       }

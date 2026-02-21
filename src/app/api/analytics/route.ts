@@ -1,21 +1,30 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { verifyAuth, unauthorizedResponse } from "@/lib/auth";
 
 export async function GET(request: Request) {
   if (!verifyAuth(request)) return unauthorizedResponse(request);
   try {
+    const { searchParams } = new URL(request.url);
+    const publicOnly = searchParams.get("publicOnly") === "true";
+
     // 1. Basic counts
-    const totalMedia = await prisma.media.count();
+    const filterWhere: Prisma.MediaWhereInput = publicOnly
+      ? { folder: { isPublic: true } }
+      : {};
+
+    const totalMedia = await prisma.media.count({ where: filterWhere });
     const imageCount = await prisma.media.count({
-      where: { fileType: "image" },
+      where: { ...filterWhere, fileType: "image" },
     });
     const videoCount = await prisma.media.count({
-      where: { fileType: "video" },
+      where: { ...filterWhere, fileType: "video" },
     });
 
-    // 2. Storage usage
+    // 2. Storage usage (Public Only)
     const storageStats = await prisma.media.aggregate({
+      where: filterWhere,
       _sum: {
         fileSize: true,
       },
@@ -33,6 +42,7 @@ export async function GET(request: Request) {
 
     const countThisMonth = await prisma.media.count({
       where: {
+        ...filterWhere,
         createdAt: {
           gte: firstDayThisMonth,
         },
@@ -41,6 +51,7 @@ export async function GET(request: Request) {
 
     const countLastMonth = await prisma.media.count({
       where: {
+        ...filterWhere,
         createdAt: {
           gte: firstDayLastMonth,
           lt: firstDayThisMonth,
@@ -55,8 +66,9 @@ export async function GET(request: Request) {
       growthRate = 100;
     }
 
-    // 4. Recent activity
+    // 4. Recent activity (Public Only)
     const recentActivity = await prisma.media.findMany({
+      where: filterWhere,
       orderBy: {
         createdAt: "desc",
       },
@@ -72,6 +84,7 @@ export async function GET(request: Request) {
 
     // 5. Folder distribution
     const folderStats = await prisma.folder.findMany({
+      where: publicOnly ? { isPublic: true } : {},
       select: {
         id: true,
         name: true,

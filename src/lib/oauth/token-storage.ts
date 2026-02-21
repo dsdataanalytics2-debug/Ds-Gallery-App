@@ -131,3 +131,30 @@ export async function getAuthenticatedOAuthClient() {
 
   return oauth2Client;
 }
+
+/**
+ * Get an authenticated Google Drive instance using user OAuth tokens
+ * Returns null if not authenticated, instead of throwing.
+ */
+export async function getOptionalAuthenticatedDrive() {
+  try {
+    const tokens = await getValidOAuthTokens();
+    if (!tokens) return null;
+
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI,
+    );
+    auth.setCredentials({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expiry_date: tokens.expiry_date,
+    });
+
+    return google.drive({ version: "v3", auth });
+  } catch (error) {
+    console.error("Failed to get authenticated drive:", error);
+    return null;
+  }
+}

@@ -5,12 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   X,
   Download,
-  Share2,
   Trash2,
   Info,
-  Calendar,
   Maximize2,
-  FileText,
   Tag,
   ExternalLink,
   ChevronRight,
@@ -20,7 +17,6 @@ import {
   Volume2,
   VolumeX,
   Settings,
-  RotateCcw,
   Move,
   Edit,
   RefreshCcw,
@@ -29,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Media } from "@/types";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface MediaPreviewDrawerProps {
   media: Media | null;
@@ -53,6 +50,8 @@ export default function MediaPreviewDrawer({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSpeed, setDownloadSpeed] = useState(0);
   const [downloadEta, setDownloadEta] = useState<number | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -111,12 +110,14 @@ export default function MediaPreviewDrawer({
     }
   };
 
-  const handleDelete = async () => {
-    if (
-      !media ||
-      !confirm("Are you sure you want to permanently delete this asset?")
-    )
-      return;
+  const handleDelete = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (!media) return;
+    setIsDeleteConfirmOpen(false);
+    setIsDeleting(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -138,6 +139,8 @@ export default function MediaPreviewDrawer({
     } catch (error) {
       console.error("Error deleting asset:", error);
       alert("An error occurred while deleting the asset");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -168,6 +171,28 @@ export default function MediaPreviewDrawer({
 
   const handleDownload = async () => {
     if (!media) return;
+
+    // For Google Drive, we must use the proxy to avoid CORS issues
+    // and rely on browser capability to handle the download
+    const isGoogleDrive =
+      media.storageType === "gdrive" ||
+      media.storageType === "google-drive" ||
+      (media.cdnUrl && media.cdnUrl.includes("drive.google.com"));
+
+    if (isGoogleDrive) {
+      const token = localStorage.getItem("token");
+      const downloadUrl = `/api/media/${media.id}/proxy?token=${token}&download=true`;
+
+      // Trigger download by creating a temporary link
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = media.fileName; // This might be overridden by Content-Disposition, but good to have
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
+
     setIsDownloading(true);
     setDownloadProgress(0);
     setDownloadSpeed(0);
@@ -271,7 +296,12 @@ export default function MediaPreviewDrawer({
                 {isLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
                     <img
-                      src={media.thumbnailUrl || "/video-placeholder.png"}
+                      src={
+                        media.storageType === "gdrive" ||
+                        media.storageType === "google-drive"
+                          ? `/api/media/${media.id}/proxy?type=thumbnail&token=${localStorage.getItem("token")}`
+                          : media.thumbnailUrl || "/video-placeholder.png"
+                      }
                       className="absolute inset-0 w-full h-full object-cover blur-sm opacity-50"
                       alt="blur"
                     />
@@ -286,6 +316,7 @@ export default function MediaPreviewDrawer({
                 <video
                   ref={videoRef}
                   src={
+                    media.storageType === "gdrive" ||
                     media.storageType === "google-drive"
                       ? `/api/media/${media.id}/proxy?token=${localStorage.getItem("token")}`
                       : media.cdnUrl
@@ -390,7 +421,13 @@ export default function MediaPreviewDrawer({
             ) : (
               <>
                 <img
-                  src={media.cdnUrl}
+                  src={
+                    media.storageType === "gdrive" ||
+                    media.storageType === "google-drive" ||
+                    (media.cdnUrl && media.cdnUrl.includes("drive.google.com"))
+                      ? `/api/media/${media.id}/proxy?token=${localStorage.getItem("token")}`
+                      : media.cdnUrl
+                  }
                   className="w-full h-full object-contain"
                   alt={media.fileName}
                 />
@@ -593,6 +630,16 @@ export default function MediaPreviewDrawer({
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={executeDelete}
+        title="Delete Asset"
+        message={`Are you sure you want to permanently delete "${media.fileName}"? This action cannot be undone.`}
+        confirmLabel="Delete Asset"
+        isLoading={isDeleting}
+      />
     </>
   );
 }

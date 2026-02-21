@@ -21,15 +21,33 @@ export async function GET(request: Request) {
     if (!sessionUser) return unauthorizedResponse();
 
     const where: any = {
-      AND: [
-        {
-          OR: [
-            { ownerId: sessionUser.id },
-            { permissions: { some: { userId: sessionUser.id } } },
-          ],
-        },
-      ],
+      AND: [],
     };
+
+    // If not admin, restrict to owned or permitted folders
+    // Plus any folders that are public (handled via ID injection to avoid Prisma sync issues)
+    if (sessionUser.role !== "admin") {
+      let publicFolderIds: string[] = [];
+      try {
+        const publicFolders: any[] =
+          await prisma.$queryRaw`SELECT id FROM "Folder" WHERE "isPublic" = true`;
+        publicFolderIds = publicFolders.map((f) => f.id);
+      } catch (e) {
+        console.warn("Could not fetch public folders via raw SQL:", e);
+      }
+
+      where.AND.push({
+        OR: [
+          { ownerId: sessionUser.id },
+          { permissions: { some: { userId: sessionUser.id } } },
+          { id: { in: publicFolderIds } },
+        ],
+      });
+    }
+
+    if (searchParams.get("isPublic") === "true") {
+      where.AND.push({ isPublic: true });
+    }
 
     if (query) {
       where.AND.push({
@@ -118,8 +136,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, description, tags, productCategory, parentId, ownerId } =
-      body;
+    const {
+      name,
+      description,
+      tags,
+      productCategory,
+      parentId,
+      ownerId,
+      isPublic,
+    } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -134,16 +159,32 @@ export async function POST(request: Request) {
     const effectiveOwnerId =
       sessionUser.role === "admin" && ownerId ? ownerId : sessionUser.id;
 
-    const folder = await prisma.folder.create({
+    // Create the folder without isPublic first to avoid Prisma Client sync issues
+    // We'll update it immediately after using raw SQL if needed
+    const folder = await (prisma.folder as any).create({
       data: {
         name,
         description,
         tags: tags || [],
         productCategory,
-        parentId: effectiveParentId,
-        ownerId: effectiveOwnerId,
-      } as any,
+        parent: effectiveParentId
+          ? { connect: { id: effectiveParentId } }
+          : undefined,
+        owner: effectiveOwnerId
+          ? { connect: { id: effectiveOwnerId } }
+          : undefined,
+      },
     });
+
+    // Update isPublic using raw SQL to bypass the outdated Prisma Client
+    if (isPublic && folder.id) {
+      try {
+        await prisma.$executeRaw`UPDATE "Folder" SET "isPublic" = true WHERE id = ${folder.id}`;
+        folder.isPublic = true;
+      } catch (sqlError) {
+        console.error("SQL Fallback Error:", sqlError);
+      }
+    }
 
     return NextResponse.json(folder);
   } catch (error: any) {

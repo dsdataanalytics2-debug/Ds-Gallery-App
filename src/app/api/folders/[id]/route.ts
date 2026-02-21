@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   verifyAuth,
   unauthorizedResponse,
   getAuthenticatedUser,
 } from "@/lib/auth";
 import { hasFolderAccess } from "@/lib/permission";
+import { getStorageProvider } from "@/lib/storage";
 
 export async function GET(
   request: Request,
@@ -18,8 +20,10 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Check permission
-    const allowed = await hasFolderAccess(sessionUser.id, id);
+    // Check permission - Admins have full access
+    const isAdmin = sessionUser.role === "admin";
+    const allowed = isAdmin || (await hasFolderAccess(sessionUser.id, id));
+
     if (!allowed) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
@@ -83,11 +87,21 @@ export async function PUT(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const { isPublic, ...restOfBody } = await request.json();
     const updatedFolder = await prisma.folder.update({
       where: { id },
-      data: body,
+      data: restOfBody as Prisma.FolderUpdateInput,
     });
+
+    // Handle isPublic update via raw SQL to bypass Prisma Client sync issues
+    if (isPublic !== undefined) {
+      try {
+        await prisma.$executeRaw`UPDATE "Folder" SET "isPublic" = ${!!isPublic} WHERE id = ${id}`;
+        (updatedFolder as any).isPublic = !!isPublic;
+      } catch (sqlError) {
+        console.error("SQL Update Fallback Error:", sqlError);
+      }
+    }
     return NextResponse.json(updatedFolder);
   } catch (error) {
     console.error("Error updating folder:", error);
@@ -109,7 +123,13 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const folder = await prisma.folder.findUnique({ where: { id } });
+    const folder = await prisma.folder.findUnique({
+      where: { id },
+      include: {
+        media: true,
+      },
+    });
+
     if (!folder) {
       return NextResponse.json({ error: "Folder not found" }, { status: 404 });
     }
@@ -118,10 +138,49 @@ export async function DELETE(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // 1. Get all media in this folder AND subfolders recursively
+    // Note: Since we are deleting the folder, we need to clean up all storage files.
+    // We can use a recursive CTE or just fetch all media that have this folder as ancestor.
+    // For simplicity, we'll fetch all media in this folder, and then recursively for children.
+
+    const cleanupFolderStorage = async (folderId: string) => {
+      // Get media in this folder
+      const mediaItems = await prisma.media.findMany({
+        where: { folderId },
+      });
+
+      for (const item of mediaItems) {
+        try {
+          const storageProvider = await getStorageProvider(item.storageType);
+          const fileIdToDelete = item.storageFileId || item.storagePath;
+          if (fileIdToDelete) {
+            await storageProvider.delete(fileIdToDelete);
+          }
+        } catch (err) {
+          console.error(`Failed to delete storage for media ${item.id}:`, err);
+        }
+      }
+
+      // Get subfolders
+      const subfolders = await prisma.folder.findMany({
+        where: { parentId: folderId },
+      });
+
+      for (const sub of subfolders) {
+        await cleanupFolderStorage(sub.id);
+      }
+    };
+
+    await cleanupFolderStorage(id);
+
+    // 2. Delete the folder record (Cascade handles DB-level media and subfolders)
     await prisma.folder.delete({
       where: { id },
     });
-    return NextResponse.json({ message: "Folder deleted" });
+
+    return NextResponse.json({
+      message: "Folder and contents deleted successfully",
+    });
   } catch (error) {
     console.error("Error deleting folder:", error);
     return NextResponse.json(

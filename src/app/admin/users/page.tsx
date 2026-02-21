@@ -9,9 +9,7 @@ import {
   Trash2,
   Mail,
   MoreVertical,
-  ChevronRight,
   Search,
-  Check,
   X,
   AlertCircle,
 } from "lucide-react";
@@ -59,7 +57,7 @@ export default function UserManagementPage() {
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       setUsers(data);
-    } catch (err) {
+    } catch {
       setError(
         "Could not load users. Please ensure you have admin permissions.",
       );
@@ -94,8 +92,8 @@ export default function UserManagementPage() {
         );
         setEditingUserId(null);
       }
-    } catch (err) {
-      console.error("Failed to update role", err);
+    } catch {
+      console.error("Failed to update role");
     }
   };
 
@@ -123,8 +121,8 @@ export default function UserManagementPage() {
       if (response.ok) {
         setUsers(users.filter((u) => u.id !== userId));
       }
-    } catch (err) {
-      console.error("Failed to delete user", err);
+    } catch {
+      console.error("Failed to delete user");
     }
   };
 

@@ -6,6 +6,7 @@ import {
   getAuthenticatedUser,
 } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
+import { getStorageProvider } from "@/lib/storage";
 
 export async function GET(
   request: Request,
@@ -51,7 +52,27 @@ export async function DELETE(
       return NextResponse.json({ error: "Media not found" }, { status: 404 });
     }
 
-    // Log the activity before deletion
+    // 1. Delete from storage if storage provider is available
+    try {
+      const storageProvider = await getStorageProvider(existing.storageType);
+      const fileIdToDelete = existing.storageFileId || existing.storagePath;
+      if (fileIdToDelete) {
+        console.log(
+          `Deleting file from ${existing.storageType}:`,
+          fileIdToDelete,
+        );
+        await storageProvider.delete(fileIdToDelete);
+      }
+    } catch (storageError) {
+      console.error(
+        "Storage deletion error (continuing with DB deletion):",
+        storageError,
+      );
+      // We continue with DB deletion even if storage deletion fails,
+      // otherwise user is stuck with a broken entry.
+    }
+
+    // 2. Log the activity before deletion
     if (sessionUser) {
       await logActivity({
         userId: sessionUser.id,

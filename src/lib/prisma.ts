@@ -21,20 +21,12 @@ const prismaClientSingleton = () => {
 };
 
 declare global {
-  namespace NodeJS {
-    interface Global {
-      prisma: PrismaClient;
-    }
-  }
+  var prisma: PrismaClient | undefined;
 }
 
-// Ensure globalThis has prisma
-declare const globalThis: {
-  prisma: PrismaClient;
-} & typeof global;
-
-const prisma = globalThis.prisma ?? prismaClientSingleton();
+const prisma = global.prisma ?? prismaClientSingleton();
 
 export default prisma;
 
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+// Forced reload for schema updates

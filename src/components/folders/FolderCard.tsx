@@ -1,19 +1,64 @@
 "use client";
 
 import Link from "next/link";
-import { Folder, MoreHorizontal } from "lucide-react";
+import {
+  Folder as FolderIcon,
+  MoreHorizontal,
+  Trash2,
+  Settings,
+  Loader2,
+} from "lucide-react";
 import { Folder as FolderType } from "@/types";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface FolderCardProps {
   folder: FolderType;
+  onUpdate?: () => void;
 }
 
-export default function FolderCard({ folder }: FolderCardProps) {
+export default function FolderCard({ folder, onUpdate }: FolderCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   // CRITICAL FIX #1: Cover Image Priority - thumbnailUrl → cdnUrl → null
   // NEVER use raw cdnUrl for videos, always use thumbnailUrl
   const coverImage =
     folder.media?.[0]?.thumbnailUrl || folder.media?.[0]?.cdnUrl || null;
+
+  const handleDeleteTrigger = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    setIsConfirmOpen(false);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/folders/${folder.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
+
+      if (res.ok) {
+        if (onUpdate) onUpdate();
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to delete: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting folder:", error);
+      alert("An unexpected error occurred.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <Link href={`/folders/${folder.id}`}>
@@ -41,22 +86,31 @@ export default function FolderCard({ folder }: FolderCardProps) {
           ) : (
             // CRITICAL FIX #6: Professional empty state with gradient
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800/50 to-slate-900">
-              <Folder className="h-8 w-8 text-slate-700" />
+              <FolderIcon className="h-8 w-8 text-slate-700" />
             </div>
           )}
 
-          {/* CRITICAL FIX #7: Menu button - fade in on hover */}
-          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Quick Actions Overlay */}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
             <button
-              className="p-1 rounded-md bg-black/50 backdrop-blur-md text-white border border-white/10 hover:bg-black/70"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Menu functionality can be added here
-              }}
+              onClick={handleDeleteTrigger}
+              disabled={isDeleting}
+              className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-lg transition-all hover:scale-110 active:scale-95 disabled:opacity-50"
+              title="Delete Collection"
             >
-              <MoreHorizontal className="h-3 w-3" />
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
             </button>
+          </div>
+
+          {/* CRITICAL FIX #7: Menu button - fade in on hover */}
+          <div className="absolute top-1 right-1 z-20">
+            <div className="p-1 rounded-md bg-black/50 backdrop-blur-md text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+              <MoreHorizontal className="h-3 w-3" />
+            </div>
           </div>
         </div>
 
@@ -65,7 +119,7 @@ export default function FolderCard({ folder }: FolderCardProps) {
           {/* Folder icon badge + name */}
           <div className="flex items-center gap-1.5 mb-1.5">
             <div className="bg-blue-500/10 text-blue-500 p-1 rounded-md shrink-0">
-              <Folder className="h-3 w-3" />
+              <FolderIcon className="h-3 w-3" />
             </div>
             <h3 className="font-semibold text-white text-xs truncate flex-1 group-hover:text-indigo-400 transition-colors">
               {folder.name}
@@ -98,6 +152,16 @@ export default function FolderCard({ folder }: FolderCardProps) {
           </div>
         </div>
       </motion.div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Collection"
+        message={`Are you sure you want to delete "${folder.name}"? All assets inside will be unassigned but preserved.`}
+        confirmLabel="Delete Collection"
+        isLoading={isDeleting}
+      />
     </Link>
   );
 }

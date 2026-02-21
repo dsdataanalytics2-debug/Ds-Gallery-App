@@ -34,6 +34,7 @@ export interface Media {
   fileSize: number;
   storagePath: string;
   storageType: string;
+  storageFileId: string;
   publicId?: string | null;
   cdnUrl: string;
   thumbnailUrl?: string | null;
@@ -42,5 +43,5 @@ export interface Media {
   createdAt: string;
   updatedAt: string;
   folder?: Folder;
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
 }

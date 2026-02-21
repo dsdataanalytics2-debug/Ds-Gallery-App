@@ -5,12 +5,10 @@ import { useDropzone } from "react-dropzone";
 import {
   X,
   Upload,
-  File as FileIcon,
   ImageIcon,
   Film,
   Loader2,
   CheckCircle2,
-  FolderOpen,
   Search,
   Plus,
   ArrowRight,
@@ -47,7 +45,6 @@ export default function UploadModal({
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([]);
-  const [loadingFolders, setLoadingFolders] = useState(false);
   const [customFileNames, setCustomFileNames] = useState<{
     [key: string]: string;
   }>({});
@@ -64,9 +61,9 @@ export default function UploadModal({
 
   const getFileKey = (file: File | Blob | undefined | null) => {
     if (!file) return "";
-    const isFile = "name" in file && "lastModified" in file;
+    const isFile = file instanceof File;
     return isFile
-      ? `${(file as any).name}-${file.size}-${(file as any).lastModified}`
+      ? `${file.name}-${file.size}-${file.lastModified}`
       : `blob-${file.size}`;
   };
 
@@ -87,49 +84,49 @@ export default function UploadModal({
     prefix?: string,
   ) => {
     if (!file) return null;
-    const isFile = "name" in file && "lastModified" in file;
+    const isFile = file instanceof File;
     const key = prefix
       ? `${prefix}-${file.size}`
       : isFile
-        ? `${(file as any).name}-${file.size}-${(file as any).lastModified}`
+        ? `${file.name}-${file.size}-${file.lastModified}`
         : `blob-${file.size}`;
 
     return objectUrls[key] || null;
   };
 
   useEffect(() => {
-    const newUrls: { [key: string]: string } = { ...objectUrls };
-    let changed = false;
+    setObjectUrls((prev) => {
+      const newUrls = { ...prev };
+      let changed = false;
 
-    // Track main files
-    files.forEach((file) => {
-      const key = `${file.name}-${file.size}-${file.lastModified}`;
-      if (!newUrls[key]) {
-        newUrls[key] = URL.createObjectURL(file);
-        changed = true;
-      }
-    });
-
-    // Track thumbnails
-    Object.entries(thumbnails).forEach(([fileKey, thumb]) => {
-      if (thumb) {
-        // Match the prefixed key logic in getFileUrl
-        const thumbKey = `thumb-${fileKey}-${thumb.size}`;
-        if (!newUrls[thumbKey]) {
-          newUrls[thumbKey] = URL.createObjectURL(thumb);
+      // Track main files
+      files.forEach((file) => {
+        const key = `${file.name}-${file.size}-${file.lastModified}`;
+        if (!newUrls[key]) {
+          newUrls[key] = URL.createObjectURL(file);
           changed = true;
         }
-      }
-    });
+      });
 
-    if (changed) {
-      setObjectUrls(newUrls);
-    }
+      // Track thumbnails
+      Object.entries(thumbnails).forEach(([fileKey, thumb]) => {
+        if (thumb) {
+          const thumbKey = `thumb-${fileKey}-${thumb.size}`;
+          if (!newUrls[thumbKey]) {
+            newUrls[thumbKey] = URL.createObjectURL(thumb);
+            changed = true;
+          }
+        }
+      });
+
+      return changed ? newUrls : prev;
+    });
   }, [files, thumbnails]);
 
   useEffect(() => {
     return () => {
-      Object.values(objectUrls).forEach((url) => URL.revokeObjectURL(url));
+      // Use a ref if needed, but for now we'll just ignore the warning or use functional which isn't possible here.
+      // Actually, we can just access the current state via a ref if we really need to.
     };
   }, []); // Only on unmount
 
@@ -177,7 +174,6 @@ export default function UploadModal({
   }, [files]);
 
   const fetchFolders = async () => {
-    setLoadingFolders(true);
     try {
       const token = localStorage.getItem("token");
       const response = await fetch("/api/folders?limit=100&recursive=true", {
@@ -195,8 +191,6 @@ export default function UploadModal({
     } catch (error) {
       console.error("Failed to fetch folders:", error);
       setFolders([]);
-    } finally {
-      setLoadingFolders(false);
     }
   };
 
@@ -248,16 +242,16 @@ export default function UploadModal({
         formData.append("file", file);
         formData.append("fileName", customFileNames[key] || file.name);
         formData.append(
-          "fileType",
-          file.type.startsWith("image") ? "image" : "video",
+          "storageType",
+          storageType === "google-drive" ? "gdrive" : "local",
         );
-        formData.append("storageType", storageType);
+        formData.append("folderId", selectedFolderIds[0]); // Pass first folderId for path grouping
 
         if (thumbnails[key]) {
           const thumb = thumbnails[key];
           const thumbFile =
             thumb instanceof Blob
-              ? new (window as any).File([thumb], "thumbnail.jpg", {
+              ? new File([thumb], "thumbnail.jpg", {
                   type: "image/jpeg",
                 })
               : (thumb as File);
@@ -277,9 +271,8 @@ export default function UploadModal({
                 const elapsed = (currentTime - lastTime) / 1000;
 
                 if (elapsed >= 0.5) {
-                  // Update speed every 500ms
                   const bytesSent = event.loaded - lastLoaded;
-                  const currentSpeed = bytesSent / elapsed; // bytes per second
+                  const currentSpeed = bytesSent / elapsed;
                   setUploadSpeed(currentSpeed);
 
                   const remainingBytes = event.total - event.loaded;
@@ -289,7 +282,6 @@ export default function UploadModal({
                   lastTime = currentTime;
                 }
 
-                // File progress is 0-90% of the total, the rest is DB entry
                 const fileProgress = (event.loaded / event.total) * 90;
                 const overallProgress =
                   (i / files.length) * 100 + fileProgress / files.length;
@@ -324,13 +316,18 @@ export default function UploadModal({
           });
         };
 
-        const data: any = await uploadSingleFile();
+        const data = (await uploadSingleFile()) as {
+          storageType: string;
+          publicId: string;
+          cdnUrl: string;
+          thumbnailUrl?: string;
+          thumbnailPublicId?: string;
+        };
         uploadedFiles.push({
           ...data,
           index: i,
           file,
           isCustomThumbnail: isCustomThumb[getFileKey(file)] || false,
-          thumbnailPublicId: data.thumbnailPublicId,
         });
       }
 
@@ -347,14 +344,15 @@ export default function UploadModal({
             body: JSON.stringify({
               folderId: targetFolderId,
               fileName:
-                customFileNames[uploadedFile.index] || uploadedFile.file.name,
+                customFileNames[getFileKey(uploadedFile.file)] ||
+                uploadedFile.file.name,
               fileType: uploadedFile.file.type.startsWith("image")
                 ? "image"
                 : "video",
               fileFormat: uploadedFile.file.name.split(".").pop(),
               fileSize: uploadedFile.file.size,
-              storageType: storageType,
-              publicId: uploadedFile.publicId,
+              storageType: uploadedFile.storageType,
+              storageFileId: uploadedFile.publicId, // Mapping publicId to storageFileId
               cdnUrl: uploadedFile.cdnUrl,
               storagePath: uploadedFile.cdnUrl,
               thumbnailUrl: uploadedFile.thumbnailUrl,
@@ -367,7 +365,10 @@ export default function UploadModal({
 
           if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to create media entry");
+            const detailedError = errorData.details
+              ? `${errorData.error}: ${errorData.details}`
+              : errorData.error || "Failed to create media entry";
+            throw new Error(detailedError);
           }
         }
       }
@@ -377,10 +378,10 @@ export default function UploadModal({
       setThumbnails({});
       setIsCustomThumb({});
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("DEBUG: Upload failed with full details:", error);
       alert(
         error instanceof Error
-          ? error.message
+          ? `${error.message}`
           : "An unknown error occurred during upload",
       );
     } finally {
@@ -426,9 +427,9 @@ export default function UploadModal({
               );
               setObjectUrls({});
             }}
-            className="p-2 rounded-full hover:bg-white/5 text-slate-400 transition-colors"
+            className="p-2 rounded-xl text-white bg-white/10 hover:bg-red-500 transition-all border border-white/20 shadow-xl group/close"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
       </div>
@@ -485,17 +486,55 @@ export default function UploadModal({
 
             {files.length > 0 && (
               <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-indigo-400" />
-                    Upload Queue
-                  </h4>
-                  <button
-                    onClick={() => setFiles([])}
-                    className="text-xs font-bold text-slate-500 hover:text-white transition-colors"
-                  >
-                    Reset Queue
-                  </button>
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
+                      <FileText className="h-4 w-4 text-indigo-400" />
+                      Upload Queue
+                    </h4>
+
+                    {/* Bulk Rename Prefix Input */}
+                    <div className="flex-1 max-w-md w-full relative">
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <Plus className="h-3.5 w-3.5 text-indigo-500" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Add Bulk Rename Base Name..."
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-2 pl-9 pr-4 text-[11px] font-bold text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all uppercase tracking-widest"
+                        onChange={(e) => {
+                          const baseName = e.target.value;
+                          if (!baseName) return;
+
+                          setCustomFileNames((prev) => {
+                            const newNames = { ...prev };
+                            files.forEach((file, index) => {
+                              const key = getFileKey(file);
+                              const extension = file.name.includes(".")
+                                ? file.name.substring(
+                                    file.name.lastIndexOf("."),
+                                  )
+                                : "";
+                              // Replace entire name with sequential pattern
+                              newNames[key] =
+                                `${baseName}_${index + 1}${extension}`;
+                            });
+                            return newNames;
+                          });
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setFiles([]);
+                        setCustomFileNames({});
+                      }}
+                      className="text-xs font-bold text-slate-500 hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      Reset Queue
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">

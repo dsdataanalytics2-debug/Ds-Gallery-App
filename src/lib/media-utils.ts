@@ -24,27 +24,34 @@ export async function captureVideoFrame(
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error("Failed to capture frame"));
-            }
-            // Clean up
-            URL.revokeObjectURL(video.src);
-          },
-          "image/jpeg",
-          0.85,
-        );
-      } else {
-        reject(new Error("Failed to get canvas context"));
+      try {
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error("Failed to capture frame"));
+              }
+              // Clean up
+              URL.revokeObjectURL(video.src);
+            },
+            "image/jpeg",
+            0.85,
+          );
+        } else {
+          reject(new Error("Failed to get canvas context"));
+          URL.revokeObjectURL(video.src);
+        }
+      } catch (error) {
+        console.error("Video thumbnail generation failed:", error);
+        reject(new Error("Video thumbnail generation failed"));
+        URL.revokeObjectURL(video.src);
       }
     };
 
-    video.onerror = (e) => {
+    video.onerror = () => {
       reject(new Error("Error loading video"));
       URL.revokeObjectURL(video.src);
     };

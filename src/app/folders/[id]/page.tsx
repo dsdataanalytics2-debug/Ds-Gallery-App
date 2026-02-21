@@ -24,6 +24,7 @@ import MediaPreviewDrawer from "@/components/media/MediaPreviewDrawer";
 import FolderCard from "@/components/folders/FolderCard";
 import CreateFolderModal from "@/components/folders/CreateFolderModal";
 import FolderSettingsModal from "@/components/folders/FolderSettingsModal";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { Sparkles, LayoutGrid } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import { Media } from "@/types";
@@ -50,6 +51,8 @@ export default function FolderPage({
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showAccessList, setShowAccessList] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchFolder = async () => {
     try {
@@ -74,15 +77,15 @@ export default function FolderPage({
   const fetchMedia = async () => {
     setMediaLoading(true);
     try {
-      const params = new URLSearchParams({
+      const queryParams = new URLSearchParams({
         folderIds: id,
         page: page.toString(),
         limit: pageSize.toString(),
       });
-      if (searchQuery) params.append("q", searchQuery);
+      if (searchQuery) queryParams.append("q", searchQuery);
 
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/media?${params.toString()}`, {
+      const res = await fetch(`/api/media?${queryParams.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "x-user-data": localStorage.getItem("user") || "",
@@ -126,14 +129,13 @@ export default function FolderPage({
     return nameOrEmail.substring(0, 2).toUpperCase();
   };
 
-  const handleDeleteFolder = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this collection? All digital assets inside will be unassigned but preserved in the system.",
-      )
-    ) {
-      return;
-    }
+  const handleDeleteFolder = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const executeDeleteFolder = async () => {
+    setIsDeleting(true);
+    setIsDeleteConfirmOpen(false);
 
     try {
       const token = localStorage.getItem("token");
@@ -154,6 +156,8 @@ export default function FolderPage({
     } catch (error) {
       console.error("Error deleting folder:", error);
       alert("An unexpected error occurred while deleting the collection.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -376,7 +380,11 @@ export default function FolderPage({
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
             {folder.children.map((child) => (
-              <FolderCard key={child.id} folder={child} />
+              <FolderCard
+                key={child.id}
+                folder={child}
+                onUpdate={fetchFolder}
+              />
             ))}
           </div>
         </div>
@@ -470,6 +478,16 @@ export default function FolderPage({
         media={selectedAsset}
         isOpen={!!selectedAsset}
         onClose={() => setSelectedAsset(null)}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={executeDeleteFolder}
+        title="Delete Collection"
+        message={`Are you sure you want to delete "${folder.name}"? All digital assets inside will be unassigned but preserved in the system.`}
+        confirmLabel="Delete Collection"
+        isLoading={isDeleting}
       />
     </div>
   );

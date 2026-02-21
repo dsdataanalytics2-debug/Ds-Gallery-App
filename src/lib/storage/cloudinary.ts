@@ -1,9 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
-import { StorageProvider, UploadResult, UploadOptions } from "./index";
+import { StorageProvider, StorageResult } from "./index";
 
 export class CloudinaryProvider implements StorageProvider {
   constructor() {
-    // Configure Cloudinary with environment variables
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
@@ -12,73 +11,79 @@ export class CloudinaryProvider implements StorageProvider {
   }
 
   async upload(
-    fileBuffer: Buffer,
-    options: UploadOptions,
-  ): Promise<UploadResult> {
+    fileBuffer: Buffer | ArrayBuffer,
+    filePath: string,
+  ): Promise<StorageResult> {
     try {
-      const { fileName, fileType } = options;
+      // Path is usually folderId/filename
+      const [folderId, fileName] = filePath.split("/");
+      const buffer = Buffer.isBuffer(fileBuffer)
+        ? fileBuffer
+        : Buffer.from(fileBuffer as ArrayBuffer);
 
-      // Upload to Cloudinary
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<{
+        public_id: string;
+        secure_url: string;
+      }>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
-            resource_type: fileType === "video" ? "video" : "image",
-            folder: `ds-gallery/${fileType}s`,
-            public_id: fileName.replace(/\.[^/.]+$/, ""), // Remove extension
+            folder: `ds-gallery/${folderId}`,
+            public_id: fileName.replace(/\.[^/.]+$/, ""),
             use_filename: true,
+            resource_type: "auto",
           },
           (error, result) => {
             if (error) reject(error);
-            else resolve(result);
+            else if (result) resolve(result);
+            else reject(new Error("Cloudinary upload result is empty"));
           },
         );
-
-        uploadStream.end(fileBuffer);
+        uploadStream.end(buffer);
       });
 
-      let thumbnailUrl = result.secure_url;
-      if (fileType === "video") {
-        // Generate a thumbnail at the 3rd second by changing the extension to .jpg and adding the 'so_3' (start offset 3) transformation
-        thumbnailUrl = result.secure_url.replace(/\.[^/.]+$/, ".jpg");
-        // Check if there is already a transformation in the URL, if not add it
-        if (!thumbnailUrl.includes("/video/upload/")) {
-          // This is a simplified transformation approach for Cloudinary URLs
-          thumbnailUrl = thumbnailUrl.replace("/v1/", "/so_3/v1/");
-        } else {
-          thumbnailUrl = thumbnailUrl.replace(
-            "/video/upload/",
-            "/video/upload/so_3/",
-          );
-        }
-      }
-
       return {
-        success: true,
+        fileId: result.public_id,
         url: result.secure_url,
-        cdnUrl: result.secure_url,
-        thumbnailUrl: thumbnailUrl,
-        publicId: result.public_id,
+        storageType: "cloudinary",
+        thumbnailUrl: result.secure_url.replace(/\.[^/.]+$/, ".jpg"),
       };
     } catch (error) {
       console.error("Cloudinary upload error:", error);
-      return {
-        success: false,
-        url: "",
-        cdnUrl: "",
-        error: error instanceof Error ? error.message : "Upload failed",
-      };
+      throw error;
     }
   }
 
-  async delete(publicId: string): Promise<void> {
+  async download(fileId: string): Promise<Buffer> {
+    // Cloudinary usually serves via URL, but we need Buffer for ZIP
+    const url = cloudinary.url(fileId);
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  async delete(fileId: string): Promise<void> {
+    await cloudinary.uploader.destroy(fileId);
+  }
+
+  async rename(
+    fileId: string,
+    newName: string,
+  ): Promise<{ fileId: string; url: string }> {
     try {
-      await cloudinary.uploader.destroy(publicId);
-    } catch (error) {
-      console.error("Cloudinary delete error:", error);
-    }
-  }
+      // fileId is usually 'ds-gallery/folderId/filename'
+      const parts = fileId.split("/");
+      // Replace the last part (filename) with the new name (minus extension for public_id)
+      parts[parts.length - 1] = newName.replace(/\.[^/.]+$/, "");
+      const newPublicId = parts.join("/");
 
-  getUrl(path: string): string {
-    return path;
+      const result = await cloudinary.uploader.rename(fileId, newPublicId);
+      return {
+        fileId: result.public_id,
+        url: result.secure_url,
+      };
+    } catch (error) {
+      console.error("Cloudinary rename error:", error);
+      throw error;
+    }
   }
 }

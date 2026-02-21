@@ -267,7 +267,11 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {folders.slice(0, 4).map((folder) => (
-                <FolderCard key={folder.id} folder={folder} />
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  onUpdate={fetchFolders}
+                />
               ))}
             </div>
           )}

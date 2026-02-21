@@ -17,8 +17,31 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface AnalyticsData {
+  summary: {
+    totalMedia: number;
+    imageCount: number;
+    videoCount: number;
+    totalSizeBytes: number;
+    growthRate: string;
+  };
+  recentActivity: {
+    id: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    createdAt: string;
+    folder: { name: string };
+  }[];
+  folderDistribution: {
+    id: string;
+    name: string;
+    _count: { media: number };
+  }[];
+}
+
 export default function AnalyticsPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -245,7 +268,7 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="space-y-4 flex-1">
-            {data?.recentActivity?.map((item: any, i: number) => (
+            {data?.recentActivity?.map((item, i: number) => (
               <div
                 key={item.id}
                 className="flex items-center gap-6 p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5 group"

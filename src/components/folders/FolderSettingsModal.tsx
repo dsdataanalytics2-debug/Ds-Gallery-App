@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Folder } from "@/types";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface User {
   id: string;
@@ -50,6 +51,21 @@ export default function FolderSettingsModal({
   const [isOwner, setIsOwner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant: "danger" | "warning" | "info";
+    confirmLabel: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "danger",
+    confirmLabel: "Confirm",
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -148,13 +164,19 @@ export default function FolderSettingsModal({
   };
 
   const handleTransfer = async (newOwnerId: string) => {
-    if (
-      !confirm(
+    setConfirmConfig({
+      isOpen: true,
+      title: "Transfer Ownership",
+      message:
         "Are you sure you want to transfer ownership of this collection? You may lose control over it.",
-      )
-    ) {
-      return;
-    }
+      variant: "warning",
+      confirmLabel: "Transfer Now",
+      onConfirm: () => executeTransfer(newOwnerId),
+    });
+  };
+
+  const executeTransfer = async (newOwnerId: string) => {
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
 
     setLoading(true);
     try {
@@ -178,6 +200,47 @@ export default function FolderSettingsModal({
       }
     } catch (err) {
       console.error("Failed to transfer", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Collection",
+      message:
+        "Are you sure you want to delete this collection? All digital assets inside will be unassigned but preserved in the system.",
+      variant: "danger",
+      confirmLabel: "Delete Collection",
+      onConfirm: executeDelete,
+    });
+  };
+
+  const executeDelete = async () => {
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/folders/${folder.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+      });
+
+      if (res.ok) {
+        onClose();
+        if (onUpdate) onUpdate();
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to delete collection: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting folder:", error);
+      alert("An unexpected error occurred while deleting the collection.");
     } finally {
       setLoading(false);
     }
@@ -212,9 +275,9 @@ export default function FolderSettingsModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+            className="p-2 rounded-xl text-white bg-white/10 hover:bg-red-500 transition-all border border-white/20 shadow-xl group/close"
           >
-            <X className="h-5 w-5 text-slate-400" />
+            <X className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
 
@@ -451,15 +514,36 @@ export default function FolderSettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-slate-900/50 border-t border-border flex justify-end">
+        <div className="p-6 bg-slate-900/50 border-t border-border flex justify-between items-center">
+          {(isOwner || isAdmin) && (
+            <button
+              onClick={handleDelete}
+              disabled={loading}
+              className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl font-bold border border-rose-500/20 transition-all text-xs uppercase tracking-widest flex items-center gap-2 group"
+            >
+              <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+              Delete Collection
+            </button>
+          )}
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold border border-white/5 transition-all text-xs uppercase tracking-widest"
+            className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold border border-white/5 transition-all text-xs uppercase tracking-widest ml-auto"
           >
             Close Settings
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        variant={confirmConfig.variant}
+        confirmLabel={confirmConfig.confirmLabel}
+        isLoading={loading}
+      />
     </div>
   );
 }

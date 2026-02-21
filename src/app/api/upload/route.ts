@@ -1,90 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStorageProvider } from "@/lib/storage";
-
-// Helper to parse form data from NextRequest
-async function parseForm(
-  req: NextRequest,
-): Promise<{ fields: any; files: any }> {
-  const formData = await req.formData();
-  const fields: any = {};
-  const files: any = {};
-
-  formData.forEach((value, key) => {
-    if (value instanceof File) {
-      if (!files[key]) files[key] = [];
-      files[key].push(value);
-    } else {
-      fields[key] = value;
-    }
-  });
-
-  return { fields, files };
-}
+import {
+  verifyAuth,
+  getAuthenticatedUser,
+  unauthorizedResponse,
+} from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-  try {
-    const { fields, files } = await parseForm(request);
+  if (!verifyAuth(request)) return unauthorizedResponse();
+  const sessionUser = getAuthenticatedUser(request);
+  if (!sessionUser) return unauthorizedResponse();
 
-    if (!files.file || files.file.length === 0) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const fileName = (formData.get("fileName") as string) || file.name;
+    const storageType = (formData.get("storageType") as string) || "local";
+    const folderId = (formData.get("folderId") as string) || "unsorted"; // Default folder if not provided
+
+    if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const file = files.file[0] as File;
-    const fileName = fields.fileName || file.name;
-    const fileType = (fields.fileType ||
-      (file.type.startsWith("image") ? "image" : "video")) as "image" | "video";
-
-    // Convert File to Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const storageType = (fields.storageType || "local") as
-      | "local"
-      | "google-drive";
-
-    // Upload using storage provider
+    const buffer = Buffer.from(await file.arrayBuffer());
     const storage = await getStorageProvider(storageType);
-    const result = await storage.upload(buffer, {
-      fileName,
-      fileType,
-    });
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Upload failed" },
-        { status: 500 },
+    // Use the new path structure: folderId/fileName
+    const storageResult = await storage.upload(
+      buffer,
+      `${folderId}/${Date.now()}_${fileName}`,
+    );
+
+    // Handle optional thumbnail if provided
+    let thumbnailUrl = null;
+    let thumbnailFileId = null;
+
+    const thumbnailFile = formData.get("thumbnail") as File;
+    if (thumbnailFile) {
+      const thumbBuffer = Buffer.from(await thumbnailFile.arrayBuffer());
+      const thumbResult = await storage.upload(
+        thumbBuffer,
+        `${folderId}/thumb_${Date.now()}_${fileName.split(".")[0]}.jpg`,
       );
-    }
-
-    // Handle optional thumbnail if provided (Local storage fallback)
-    let finalThumbnailUrl = result.thumbnailUrl;
-    let thumbnailPublicId = undefined;
-
-    if (files.thumbnail && files.thumbnail.length > 0) {
-      const thumbFile = files.thumbnail[0] as File;
-      const thumbBuffer = Buffer.from(await thumbFile.arrayBuffer());
-      const thumbResult = await storage.upload(thumbBuffer, {
-        fileName: `thumb_${fileName.split(".")[0]}_${Date.now()}.jpg`,
-        fileType: "image",
-      });
-      if (thumbResult.success) {
-        finalThumbnailUrl = thumbResult.cdnUrl;
-        thumbnailPublicId = thumbResult.publicId;
-      }
+      thumbnailUrl = thumbResult.url;
+      thumbnailFileId = thumbResult.fileId;
     }
 
     return NextResponse.json({
       success: true,
-      url: result.url,
-      cdnUrl: result.cdnUrl,
-      thumbnailUrl: finalThumbnailUrl,
-      publicId: result.publicId,
-      thumbnailPublicId: thumbnailPublicId,
+      url: storageResult.url,
+      cdnUrl: storageResult.url,
+      publicId: storageResult.fileId,
+      thumbnailUrl: thumbnailUrl,
+      thumbnailPublicId: thumbnailFileId,
+      storageType: storageResult.storageType,
     });
   } catch (error: any) {
-    console.error("Upload error:", error);
-    console.error("Error stack:", error?.stack);
-    console.error("Error message:", error?.message);
+    console.error("Upload error detail:", error);
     return NextResponse.json(
       { error: error?.message || "Failed to upload file" },
       { status: 500 },

@@ -11,6 +11,8 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
+    "@types/archiver": "^7.0.0",
+    "archiver": "^7.0.1",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "formidable": "^3.5.4",

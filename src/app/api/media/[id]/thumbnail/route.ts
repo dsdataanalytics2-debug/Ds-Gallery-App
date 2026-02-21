@@ -32,17 +32,19 @@ export async function PATCH(
     // Upload to set storage provider
     const arrayBuffer = await thumbnailFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const storage = await getStorageProvider();
+    const storage = await getStorageProvider(media.storageType);
 
     // Use the original filename or similar for the thumbnail
-    const result = await storage.upload(buffer, {
-      fileName: `thumb_${media.fileName.split(".")[0]}_${Date.now()}.jpg`,
-      fileType: "image",
-    });
+    // Path: folderId/filename
+    const storageResult = await storage.upload(
+      buffer,
+      `${media.folderId}/thumb_${Date.now()}_${media.fileName.split(".")[0]}.jpg`,
+    );
 
-    if (!result.success) {
+    // StorageResult from new providers has url property
+    if (!storageResult.url) {
       return NextResponse.json(
-        { error: result.error || "Upload failed" },
+        { error: "Upload failed to return URL" },
         { status: 500 },
       );
     }
@@ -50,7 +52,7 @@ export async function PATCH(
     const updatedMedia = await prisma.media.update({
       where: { id },
       data: {
-        thumbnailUrl: result.cdnUrl,
+        thumbnailUrl: storageResult.url,
         isCustomThumbnail: true,
       },
     });

@@ -26,8 +26,9 @@ export default function Topbar() {
     const userData = localStorage.getItem("user");
     if (userData) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser(JSON.parse(userData));
-      } catch (e) {
+      } catch {
         console.error("Failed to parse user data");
       }
     }

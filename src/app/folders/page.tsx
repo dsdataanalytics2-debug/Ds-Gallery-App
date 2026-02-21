@@ -4,26 +4,21 @@ import { useState, useEffect } from "react";
 import {
   Search,
   LayoutGrid,
-  List,
   Plus,
-  MoreHorizontal,
   Folder as FolderIcon,
-  Calendar,
   Layers,
-  Sparkles,
-  ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
 import { Folder } from "@/types";
 import { cn } from "@/lib/utils";
 import CreateFolderModal from "@/components/folders/CreateFolderModal";
+import FolderCard from "@/components/folders/FolderCard";
 import Pagination from "@/components/ui/Pagination";
 
 export default function FoldersPage() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
@@ -113,29 +108,11 @@ export default function FoldersPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={cn(
-              "p-2 rounded-lg transition-all",
-              viewMode === "grid"
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-                : "text-slate-500 hover:text-white",
-            )}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "p-2 rounded-lg transition-all",
-              viewMode === "list"
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-                : "text-slate-500 hover:text-white",
-            )}
-          >
-            <List className="h-4 w-4" />
-          </button>
+        <div className="flex items-center gap-2 bg-indigo-600/10 text-indigo-400 rounded-xl px-3 py-2 border border-indigo-500/20">
+          <LayoutGrid className="h-4 w-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">
+            Grid View
+          </span>
         </div>
       </div>
 
@@ -173,60 +150,13 @@ export default function FoldersPage() {
         </div>
       ) : (
         <>
-          <div
-            className={cn(
-              "grid gap-6",
-              viewMode === "grid"
-                ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4  xl:grid-cols-7"
-                : "grid-cols-1",
-            )}
-          >
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7">
             {folders.map((folder) => (
-              <Link
+              <FolderCard
                 key={folder.id}
-                href={`/folders/${folder.id}`}
-                className={cn(
-                  "group bg-card border border-border rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-all duration-300",
-                  viewMode === "list" && "flex items-center p-4 gap-6",
-                )}
-              >
-                {viewMode === "grid" && (
-                  <div className="aspect-[16/9] bg-slate-900 relative p-4 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-transparent group-hover:bg-indigo-600/5 transition-colors" />
-                    <FolderIcon className="h-16 w-16 text-slate-800 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-500" />
-                    <div className="absolute top-4 right-4 p-2 rounded-lg bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ArrowUpRight className="h-4 w-4 text-white" />
-                    </div>
-                  </div>
-                )}
-
-                {viewMode === "list" && (
-                  <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shrink-0">
-                    <FolderIcon className="h-6 w-6 text-slate-600 group-hover:text-indigo-400 transition-colors" />
-                  </div>
-                )}
-
-                <div className={cn("p-6", viewMode === "list" && "p-0 flex-1")}>
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-white group-hover:text-indigo-400 transition-colors">
-                      {folder.name}
-                    </h3>
-                    <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 uppercase">
-                      {folder._count?.media || 0} Assets
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
-                    {folder.description ||
-                      "No description provided for this collection."}
-                  </p>
-                  <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                    <div className="flex items-center gap-1.5">
-                      <Sparkles className="h-3 w-3 text-indigo-400/50" />
-                      <span>{folder.productCategory || "Uncategorized"}</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                folder={folder}
+                onUpdate={fetchFolders}
+              />
             ))}
           </div>
 

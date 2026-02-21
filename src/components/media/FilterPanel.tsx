@@ -1,24 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Search,
-  LayoutGrid,
-  List,
-  Filter,
-  ChevronDown,
-  Calendar,
-  Image as ImageIcon,
-  Film,
-  Folder,
-} from "lucide-react";
+import { Search, LayoutGrid, Image as ImageIcon, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FilterPanelProps {
   className?: string;
   counts?: { all: number; images: number; videos: number };
   activeFilter?: string;
-  onFilterChange?: (filter: any) => void;
+  onFilterChange?: (filter: "all" | "image" | "video") => void;
   activeCollections?: string[];
   onCollectionToggle?: (collectionId: string) => void;
   searchValue?: string;
@@ -35,12 +25,12 @@ export default function FilterPanel({
   searchValue = "",
   onSearchChange,
 }: FilterPanelProps) {
-  const [folders, setFolders] = useState<any[]>([]);
+  const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     // We fetch a larger limit for the filter panel to ensure the user can select from many collections
-    fetch("/api/folders?limit=100&recursive=true", {
+    fetch("/api/folders?limit=100&recursive=true&isPublic=true", {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-user-data": localStorage.getItem("user") || "",
@@ -88,18 +78,23 @@ export default function FilterPanel({
         <div className="space-y-2">
           {[
             {
-              id: "all",
+              id: "all" as const,
               label: "All Assets",
               icon: LayoutGrid,
               count: counts.all,
             },
             {
-              id: "image",
+              id: "image" as const,
               label: "Images",
               icon: ImageIcon,
               count: counts.images,
             },
-            { id: "video", label: "Videos", icon: Film, count: counts.videos },
+            {
+              id: "video" as const,
+              label: "Videos",
+              icon: Film,
+              count: counts.videos,
+            },
           ].map((item) => (
             <button
               key={item.id}
@@ -135,7 +130,7 @@ export default function FilterPanel({
           Collections
         </h3>
         <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-          {folders.map((folder: any) => (
+          {folders.map((folder) => (
             <label
               key={folder.id}
               className="flex items-center gap-3 p-2 group cursor-pointer"

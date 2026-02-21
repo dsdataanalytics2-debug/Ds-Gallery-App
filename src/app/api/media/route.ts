@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   verifyAuth,
   unauthorizedResponse,
@@ -20,7 +21,15 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "12");
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const publicOnly = searchParams.get("publicOnly") === "true";
+
+    const where: Prisma.MediaWhereInput = {};
+    if (publicOnly) {
+      where.folder = {
+        isPublic: true,
+      };
+    }
+
     if (folderIds && folderIds.length > 0) {
       where.folderId = { in: folderIds };
     }
@@ -93,22 +102,33 @@ export async function POST(request: Request) {
     }
 
     try {
+      const createData = {
+        folderId: body.folderId,
+        fileName: body.fileName || "Untitled",
+        fileType: body.fileType || "image",
+        fileFormat: body.fileFormat || "unknown",
+        fileSize: body.fileSize ? Math.floor(Number(body.fileSize)) : 0,
+        storagePath: body.storagePath || body.cdnUrl || "unknown",
+        storageType:
+          body.storageType === "google-drive"
+            ? "gdrive"
+            : body.storageType || "local",
+        storageFileId: body.storageFileId || body.publicId || "",
+        publicId: body.publicId || null,
+        cdnUrl: body.cdnUrl || "unknown",
+        thumbnailUrl: body.thumbnailUrl || null,
+        isCustomThumbnail: body.isCustomThumbnail || false,
+        tags: body.tags || [],
+        metadata: body.metadata || {},
+      };
+
+      console.log(
+        "Attempting to create media with data:",
+        JSON.stringify(createData, null, 2),
+      );
+
       const media = await prisma.media.create({
-        data: {
-          folderId: body.folderId,
-          fileName: body.fileName || "Untitled",
-          fileType: body.fileType || "image",
-          fileFormat: body.fileFormat || "unknown",
-          fileSize: body.fileSize ? Math.floor(Number(body.fileSize)) : 0,
-          storagePath: body.storagePath || body.cdnUrl || "unknown",
-          storageType: body.storageType || "local",
-          publicId: body.publicId || null,
-          cdnUrl: body.cdnUrl || "unknown",
-          thumbnailUrl: body.thumbnailUrl || null,
-          isCustomThumbnail: body.isCustomThumbnail || false,
-          tags: body.tags || [],
-          metadata: body.metadata || {},
-        },
+        data: createData,
       });
 
       // Log the activity
@@ -127,17 +147,18 @@ export async function POST(request: Request) {
 
       return NextResponse.json(media);
     } catch (prismaError: any) {
-      console.error("Prisma Create Error:", prismaError);
+      console.error("Prisma Create Error Detail:", {
+        message: prismaError.message,
+        code: prismaError.code,
+        meta: prismaError.meta,
+        stack: prismaError.stack,
+      });
       return NextResponse.json(
         {
           error: "Failed to create media entry in database",
           details: prismaError.message,
           code: prismaError.code,
           meta: prismaError.meta,
-          stack:
-            process.env.NODE_ENV === "development"
-              ? prismaError.stack
-              : undefined,
         },
         { status: 500 },
       );

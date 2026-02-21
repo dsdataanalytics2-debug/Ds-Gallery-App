@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth, unauthorizedResponse } from "@/lib/auth";
-import { getAuthenticatedOAuthClient } from "@/lib/oauth/token-storage";
+import { getOptionalAuthenticatedDrive } from "@/lib/oauth/token-storage";
 import { google } from "googleapis";
 import { Readable } from "stream";
 
@@ -9,51 +9,83 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { searchParams } = new URL(request.url);
-  const queryToken = searchParams.get("token");
-  const authHeader = request.headers.get("authorization");
-
-  const token =
-    queryToken ||
-    (authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null);
-
-  if (token !== "mock-jwt-token-for-demo") {
+  if (!verifyAuth(request)) {
     return unauthorizedResponse();
   }
 
   try {
     const { id } = await params;
-    console.log(`[Proxy] Requesting media ID: ${id}`);
-
     const media = await prisma.media.findUnique({
       where: { id },
     });
 
     if (!media) {
-      console.error(`[Proxy] Media not found for ID: ${id}`);
       return new Response("Media not found", { status: 404 });
     }
 
-    if (media.storageType !== "google-drive" || !media.publicId) {
-      console.error(
-        `[Proxy] Not a Google Drive asset: storageType=${media.storageType}, publicId=${media.publicId}`,
-      );
+    // Modern check for gdrive
+    const isDrive =
+      media.storageType === "gdrive" || media.storageType === "google-drive";
+    if (!isDrive) {
       return new Response("Not a Google Drive asset", { status: 400 });
     }
 
+    const { searchParams } = new URL(request.url);
     const isThumbnail = searchParams.get("type") === "thumbnail";
-    const metadata = media.metadata as any;
-    const fileId =
-      isThumbnail && metadata?.thumbnailPublicId
-        ? metadata.thumbnailPublicId
-        : media.publicId;
 
-    console.log(
-      `[Proxy] Fetching from Google Drive: ${fileId} (Thumbnail: ${isThumbnail})`,
-    );
+    // Prioritize storageFileId, fallback to publicId for legacy Compatibility
+    const mediaAny = media as any;
+    const fileId = mediaAny.storageFileId || mediaAny.publicId;
 
-    const driveClient = await getAuthenticatedOAuthClient();
-    const drive = google.drive({ version: "v3", auth: driveClient });
+    if (!fileId) {
+      return new Response("Missing storage file ID", { status: 400 });
+    }
+
+    // Dual-Auth Logic
+    let drive;
+    const userDrive = await getOptionalAuthenticatedDrive();
+    if (userDrive) {
+      drive = userDrive;
+    } else {
+      const auth = new google.auth.JWT({
+        email: process.env.GOOGLE_CLIENT_EMAIL,
+        key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        scopes: ["https://www.googleapis.com/auth/drive"],
+      });
+      drive = google.drive({ version: "v3", auth });
+    }
+
+    // Special handling for thumbnails
+    if (isThumbnail) {
+      try {
+        const fileMetadata = await drive.files.get({
+          fileId: fileId,
+          fields: "thumbnailLink",
+          supportsAllDrives: true,
+        });
+
+        const thumbnailLink = fileMetadata.data.thumbnailLink;
+        if (thumbnailLink) {
+          // GDrive thumbnails are served as temporary public URLs.
+          // We can redirect to them for efficiency, or fetch them if CORS is an issue.
+          // Let's fetch them to keep it truly 'proxied' and avoid CORS issues in the UI.
+          const thumbRes = await fetch(thumbnailLink);
+          if (thumbRes.ok) {
+            const thumbBlob = await thumbRes.blob();
+            return new Response(thumbBlob, {
+              headers: {
+                "Content-Type":
+                  thumbRes.headers.get("Content-Type") || "image/jpeg",
+                "Cache-Control": "public, max-age=3600",
+              },
+            });
+          }
+        }
+      } catch (thumbError) {
+        console.warn("[Proxy] Failed to fetch GDrive thumbnail:", thumbError);
+        // Fallback to full file if thumbnail fails (though inefficient)
+      }
+    }
 
     // Handle Range requests for seeking
     const rangeHeader = request.headers.get("range");
@@ -64,8 +96,6 @@ export async function GET(
 
     const driveRequestHeaders: any = {};
     if (rangeHeader && !isThumbnail) {
-      // Ranges usually don't apply to thumbnails
-      console.log(`[Proxy] Range request: ${rangeHeader}`);
       driveRequestHeaders.Range = rangeHeader;
     }
 
@@ -87,34 +117,24 @@ export async function GET(
     // Enable range requests for seeking
     headers.set("Accept-Ranges", "bytes");
 
-    console.log(
-      `[Proxy] Delivering stream: ${contentType}, length: ${contentLength}`,
-    );
-
-    // Convert Node.js Readable to Web ReadableStream robustly
-    const nodeStream = response.data as Readable;
+    // Convert Node.js Readable to Web ReadableStream
+    const nodeStream = response.data as any;
     const webStream = new ReadableStream({
       start(controller) {
-        nodeStream.on("data", (chunk) => {
+        nodeStream.on("data", (chunk: Buffer | Uint8Array) => {
           try {
             controller.enqueue(new Uint8Array(chunk));
-          } catch (e) {
-            // Ignore "Controller is already closed" errors
-          }
+          } catch (e) {}
         });
         nodeStream.on("end", () => {
           try {
             controller.close();
-          } catch (e) {
-            // Ignore "Controller is already closed" errors
-          }
+          } catch (e) {}
         });
-        nodeStream.on("error", (err) => {
+        nodeStream.on("error", (err: Error) => {
           try {
             controller.error(err);
-          } catch (e) {
-            // Ignore "Controller is already closed" errors
-          }
+          } catch (e) {}
         });
       },
       cancel() {
