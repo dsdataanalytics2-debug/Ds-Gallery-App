@@ -63,7 +63,10 @@ export async function POST(request: NextRequest) {
       try {
         for (const item of mediaItems) {
           const storage = await getStorageProvider((item as any).storageType);
-          const buffer = await storage.download((item as any).storageFileId);
+          const buffer = await storage.download(
+            (item as any).storageFileId,
+            (item as any).googleAccountId || undefined,
+          );
           archive.append(buffer, { name: (item as any).fileName });
         }
         await archive.finalize();

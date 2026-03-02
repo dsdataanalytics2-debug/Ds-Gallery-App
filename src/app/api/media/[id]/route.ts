@@ -57,11 +57,11 @@ export async function DELETE(
       const storageProvider = await getStorageProvider(existing.storageType);
       const fileIdToDelete = existing.storageFileId || existing.storagePath;
       if (fileIdToDelete) {
-        console.log(
-          `Deleting file from ${existing.storageType}:`,
+        await storageProvider.delete(
           fileIdToDelete,
+          (existing as { googleAccountId?: string | null }).googleAccountId ||
+            undefined,
         );
-        await storageProvider.delete(fileIdToDelete);
       }
     } catch (storageError) {
       console.error(
@@ -135,7 +135,11 @@ export async function PATCH(
             `Replacing: Deleting old file from ${existing.storageType}:`,
             oldFileId,
           );
-          await storageProvider.delete(oldFileId);
+          await storageProvider.delete(
+            oldFileId,
+            (existing as { googleAccountId?: string | null }).googleAccountId ||
+              undefined,
+          );
         }
       } catch (e) {
         console.error("Cleanup of old file failed during replacement:", e);

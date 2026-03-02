@@ -42,6 +42,19 @@ export default function UploadModal({
   const [storageType, setStorageType] = useState<"local" | "google-drive">(
     "local",
   );
+  const [googleAccounts, setGoogleAccounts] = useState<
+    {
+      id: string;
+      email: string;
+      name: string;
+      picture: string;
+      isActive: boolean;
+    }[]
+  >([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null,
+  );
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([]);
@@ -145,6 +158,26 @@ export default function UploadModal({
     }
   }, [isOpen, folderId]);
 
+  // Fetch Google accounts when user switches to Drive storage
+  useEffect(() => {
+    if (storageType !== "google-drive") return;
+    setLoadingAccounts(true);
+    const token = localStorage.getItem("token");
+    fetch("/api/google-auth/accounts", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const accounts = data.accounts || [];
+        setGoogleAccounts(accounts);
+        // Auto-select the active account
+        const active = accounts.find((a: { isActive: boolean }) => a.isActive);
+        if (active) setSelectedAccountId(active.id);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingAccounts(false));
+  }, [storageType]);
+
   // Capture thumbnails when videos are added
   useEffect(() => {
     const generateThumbs = async () => {
@@ -245,7 +278,10 @@ export default function UploadModal({
           "storageType",
           storageType === "google-drive" ? "gdrive" : "local",
         );
-        formData.append("folderId", selectedFolderIds[0]); // Pass first folderId for path grouping
+        formData.append("folderId", selectedFolderIds[0]);
+        if (storageType === "google-drive" && selectedAccountId) {
+          formData.append("googleAccountId", selectedAccountId);
+        }
 
         if (thumbnails[key]) {
           const thumb = thumbnails[key];
@@ -322,6 +358,7 @@ export default function UploadModal({
           cdnUrl: string;
           thumbnailUrl?: string;
           thumbnailPublicId?: string;
+          googleAccountId?: string | null;
         };
         uploadedFiles.push({
           ...data,
@@ -352,11 +389,12 @@ export default function UploadModal({
               fileFormat: uploadedFile.file.name.split(".").pop(),
               fileSize: uploadedFile.file.size,
               storageType: uploadedFile.storageType,
-              storageFileId: uploadedFile.publicId, // Mapping publicId to storageFileId
+              storageFileId: uploadedFile.publicId,
               cdnUrl: uploadedFile.cdnUrl,
               storagePath: uploadedFile.cdnUrl,
               thumbnailUrl: uploadedFile.thumbnailUrl,
               isCustomThumbnail: uploadedFile.isCustomThumbnail,
+              googleAccountId: uploadedFile.googleAccountId || null,
               metadata: {
                 thumbnailPublicId: uploadedFile.thumbnailPublicId,
               },
@@ -693,6 +731,70 @@ export default function UploadModal({
               Choose where to route these assets.
             </p>
           </div>
+
+          {/* Google Account Selector */}
+          {storageType === "google-drive" && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                Upload to Account
+              </p>
+              {loadingAccounts ? (
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Loading accounts...
+                </div>
+              ) : googleAccounts.length === 0 ? (
+                <p className="text-xs text-red-400">
+                  No Google accounts connected. Add one in Settings first.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {googleAccounts.map((acc) => (
+                    <button
+                      key={acc.id}
+                      onClick={() => setSelectedAccountId(acc.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
+                        selectedAccountId === acc.id
+                          ? "border-indigo-500/50 bg-indigo-500/10"
+                          : "border-white/5 bg-white/[0.02] hover:border-white/10",
+                      )}
+                    >
+                      {acc.picture ? (
+                        <img
+                          src={acc.picture}
+                          alt={acc.name}
+                          className="w-6 h-6 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                          {acc.name?.[0]?.toUpperCase() ?? "G"}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={cn(
+                            "text-[11px] font-bold truncate",
+                            selectedAccountId === acc.id
+                              ? "text-indigo-300"
+                              : "text-white",
+                          )}
+                        >
+                          {acc.name || acc.email}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {acc.email}
+                        </p>
+                      </div>
+                      {selectedAccountId === acc.id && (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4 flex-1 flex flex-col min-h-0">
             <div className="relative">

@@ -15,15 +15,22 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
-    if (!token && pathname !== "/login") {
-      router.push("/login");
-    } else if (token && pathname === "/login") {
+    if (!token) {
+      if (pathname !== "/login") {
+        router.push("/login");
+      }
+      // No token + on /login: just stay, login page renders below
+      return;
+    }
+
+    if (token && pathname === "/login") {
       router.push("/");
-    } else if (token && storedUser) {
+      return;
+    }
+
+    if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
-
-        // Role check for admin routes
         if (pathname.startsWith("/admin") && user.role !== "admin") {
           router.push("/");
         } else {
@@ -34,22 +41,23 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("user");
         router.push("/login");
       }
-    } else if (token && !storedUser && pathname !== "/login") {
-      setIsAuthenticated(true); // Basic fallback if user object is missing but token exists
+    } else {
+      setIsAuthenticated(true); // token exists but no user object
     }
   }, [pathname, router]);
 
+  // Show login page immediately — no need to wait for auth state
+  if (pathname === "/login") {
+    return <main className="min-h-screen bg-background">{children}</main>;
+  }
+
+  // Show spinner while checking auth for protected routes
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
       </div>
     );
-  }
-
-  // If we are on login page, show it centered (regardless of auth state, but usually when not auth)
-  if (pathname === "/login") {
-    return <main className="min-h-screen bg-background">{children}</main>;
   }
 
   // Otherwise, only show if authenticated, wrapped in admin layout

@@ -3,15 +3,21 @@ export interface StorageResult {
   url: string;
   storageType: "local" | "gdrive" | "cloudinary";
   thumbnailUrl?: string;
+  googleAccountId?: string; // Track which GDrive account was used
 }
 
 export interface StorageProvider {
-  upload(file: Buffer | ArrayBuffer, path: string): Promise<StorageResult>;
-  download(fileId: string): Promise<Buffer>;
-  delete(fileId: string): Promise<void>;
+  upload(
+    file: Buffer | ArrayBuffer,
+    path: string,
+    accountId?: string,
+  ): Promise<StorageResult>;
+  download(fileId: string, accountId?: string): Promise<Buffer>;
+  delete(fileId: string, accountId?: string): Promise<void>;
   rename(
     fileId: string,
     newName: string,
+    accountId?: string,
   ): Promise<{ fileId: string; url?: string }>;
   getPublicUrl?(fileId: string): string;
 }

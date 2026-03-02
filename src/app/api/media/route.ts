@@ -120,6 +120,7 @@ export async function POST(request: Request) {
         isCustomThumbnail: body.isCustomThumbnail || false,
         tags: body.tags || [],
         metadata: body.metadata || {},
+        googleAccountId: body.googleAccountId || null,
       };
 
       console.log(

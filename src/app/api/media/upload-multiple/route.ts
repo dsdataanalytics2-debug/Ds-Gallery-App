@@ -21,6 +21,18 @@ export async function POST(request: NextRequest) {
       (formData.get("storageType") as string) ||
       process.env.STORAGE_PROVIDER ||
       "local";
+    const googleAccountId = formData.get("googleAccountId") as string;
+
+    // For GDrive uploads, googleAccountId is mandatory — no fallback
+    if (
+      (storageType === "gdrive" || storageType === "google-drive") &&
+      !googleAccountId
+    ) {
+      return NextResponse.json(
+        { error: "googleAccountId is required for Google Drive uploads" },
+        { status: 400 },
+      );
+    }
 
     if (!folderId) {
       return NextResponse.json(
@@ -55,19 +67,19 @@ export async function POST(request: NextRequest) {
         const fileFormat = fileName.split(".").pop() || "";
         const fileSize = file.size;
 
-        // Upload to storage
-        // Path: folderId/fileName (LocalStorageProvider and GoogleDriveProvider use this)
+        // Upload to storage — pass googleAccountId for GDrive
         const storageResult = await storage.upload(
           buffer,
           `${folderId}/${Date.now()}_${fileName}`,
+          googleAccountId,
         );
 
-        // Add to rollback queue
+        // Add to rollback queue — pass googleAccountId for GDrive cleanup
         rollbackActions.push(async () => {
-          await storage.delete(storageResult.fileId);
+          await storage.delete(storageResult.fileId, googleAccountId);
         });
 
-        // Save to Database
+        // Save to Database — link media to the Google account used
         const media = await prisma.media.create({
           data: {
             folderId,
@@ -79,6 +91,7 @@ export async function POST(request: NextRequest) {
             storageFileId: storageResult.fileId,
             cdnUrl: storageResult.url,
             storagePath: storageResult.url, // Legacy compatibility
+            googleAccountId: storageResult.googleAccountId || null,
           },
           include: { folder: true },
         });

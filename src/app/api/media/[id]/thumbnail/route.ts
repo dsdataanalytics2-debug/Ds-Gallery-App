@@ -39,6 +39,7 @@ export async function PATCH(
     const storageResult = await storage.upload(
       buffer,
       `${media.folderId}/thumb_${Date.now()}_${media.fileName.split(".")[0]}.jpg`,
+      media.googleAccountId || undefined,
     );
 
     // StorageResult from new providers has url property

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth, unauthorizedResponse } from "@/lib/auth";
-import { getOptionalAuthenticatedDrive } from "@/lib/oauth/token-storage";
-import { google } from "googleapis";
+import { getGoogleDriveClient } from "@/lib/gdrive-client";
 import { Readable } from "stream";
 
 export async function GET(
@@ -33,27 +32,27 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const isThumbnail = searchParams.get("type") === "thumbnail";
 
-    // Prioritize storageFileId, fallback to publicId for legacy Compatibility
-    const mediaAny = media as any;
-    const fileId = mediaAny.storageFileId || mediaAny.publicId;
+    // Prioritize storageFileId, fallback to publicId for legacy compatibility
+    const mediaAny2 = media as {
+      storageFileId?: string;
+      publicId?: string;
+      googleAccountId?: string | null;
+    };
+    const fileId = mediaAny2.storageFileId || mediaAny2.publicId;
 
     if (!fileId) {
       return new Response("Missing storage file ID", { status: 400 });
     }
 
-    // Dual-Auth Logic
-    let drive;
-    const userDrive = await getOptionalAuthenticatedDrive();
-    if (userDrive) {
-      drive = userDrive;
-    } else {
-      const auth = new google.auth.JWT({
-        email: process.env.GOOGLE_CLIENT_EMAIL,
-        key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        scopes: ["https://www.googleapis.com/auth/drive"],
-      });
-      drive = google.drive({ version: "v3", auth });
+    const googleAccountId = (media as any).googleAccountId;
+    if (!googleAccountId) {
+      return new Response(
+        "Media is missing a linked Google account ID. This is required for security and account isolation.",
+        { status: 400 },
+      );
     }
+
+    const drive = await getGoogleDriveClient(googleAccountId);
 
     // Special handling for thumbnails
     if (isThumbnail) {

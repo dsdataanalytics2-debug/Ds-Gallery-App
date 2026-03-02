@@ -79,7 +79,11 @@ export async function POST(request: NextRequest) {
       console.log(`Renaming in storage: ${storageId} -> ${newFileName}`);
 
       // Rename in storage and get new mapping
-      const result = await storage.rename(storageId, newFileName);
+      const result = await storage.rename(
+        storageId,
+        newFileName,
+        (item as any).googleAccountId || undefined,
+      );
 
       // Update in DB
       try {

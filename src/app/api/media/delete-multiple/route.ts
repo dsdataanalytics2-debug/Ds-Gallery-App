@@ -63,7 +63,10 @@ export async function POST(request: NextRequest) {
             `Deleting file from ${item.storageType}:`,
             fileIdToDelete,
           );
-          await storage.delete(fileIdToDelete);
+          await storage.delete(
+            fileIdToDelete,
+            item.googleAccountId || undefined,
+          );
         }
       } catch (storageError) {
         console.error(

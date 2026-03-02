@@ -190,8 +190,8 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error creating folder:", error);
 
-    // Handle foreign key violation (stale user ID)
-    if (error.code === "P2003") {
+    // Handle foreign key violation or missing record (stale user ID)
+    if (error.code === "P2003" || error.code === "P2025") {
       return NextResponse.json(
         {
           error: "Session data mismatch",

@@ -15,6 +15,7 @@ export class LocalStorageProvider implements StorageProvider {
   async upload(
     file: Buffer | ArrayBuffer,
     filePath: string,
+    accountId?: string,
   ): Promise<StorageResult> {
     try {
       // filePath should be folderId/fileName
@@ -43,7 +44,7 @@ export class LocalStorageProvider implements StorageProvider {
     }
   }
 
-  async download(fileId: string): Promise<Buffer> {
+  async download(fileId: string, accountId?: string): Promise<Buffer> {
     try {
       // fileId is /uploads/folderId/fileName
       const relativePath = fileId.startsWith("/uploads/")
@@ -62,7 +63,7 @@ export class LocalStorageProvider implements StorageProvider {
     }
   }
 
-  async delete(fileId: string): Promise<void> {
+  async delete(fileId: string, accountId?: string): Promise<void> {
     try {
       const relativePath = fileId.startsWith("/uploads/")
         ? fileId.substring(9)
@@ -81,6 +82,7 @@ export class LocalStorageProvider implements StorageProvider {
   async rename(
     fileId: string,
     newName: string,
+    accountId?: string,
   ): Promise<{ fileId: string; url: string }> {
     try {
       const relativePath = fileId.startsWith("/uploads/")

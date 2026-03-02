@@ -34,6 +34,8 @@ model Media {
   storagePath       String   // To be migrated to storageFileId
   storageType       String   @default("local") // local | gdrive
   storageFileId     String   @default("")
+  googleAccountId   String?  // FK → GoogleAccount.id
+  googleAccount     GoogleAccount? @relation(fields: [googleAccountId], references: [id])
   publicId          String?
   cdnUrl            String
   thumbnailUrl      String?
@@ -72,15 +74,18 @@ model AuditLog {
   user       User     @relation(fields: [userId], references: [id])
 }
 
-model GoogleOAuthToken {
+model GoogleAccount {
   id           String   @id @default(cuid())
-  accessToken  String   @db.Text
-  refreshToken String   @db.Text
-  expiresAt    DateTime
-  scope        String?
-  tokenType    String   @default("Bearer")
+  tenantId     String   @default("default") // Added tenantId
+  email        String   @unique
+  displayName  String?
+  picture      String?
+  refreshToken String   @db.Text   // AES-256-GCM encrypted
+  isActive     Boolean  @default(false)
+  rootFolderId String?             // DS-Gallery/{email} folder ID
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  media        Media[]
 }
 
 model FolderPermission {
