@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { verifyAuth, getAuthenticatedUser } from "@/lib/auth";
 import {
   Users,
   UserPlus,
@@ -12,7 +13,10 @@ import {
   Search,
   X,
   AlertCircle,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
+import { formatTimeAgo, cn } from "@/lib/utils";
 
 import AddUserModal from "@/components/admin/AddUserModal";
 
@@ -93,7 +97,7 @@ export default function UserManagementPage() {
         setEditingUserId(null);
       }
     } catch {
-      console.error("Failed to update role");
+      setError("Invalid security credentials");
     }
   };
 
@@ -139,7 +143,13 @@ export default function UserManagementPage() {
       <AddUserModal
         isOpen={isAddingUser}
         onClose={() => setIsAddingUser(false)}
-        onUserAdded={handleUserAdded}
+        onUserAdded={(user) => {
+          const newUser: User = {
+            ...user,
+            createdAt: new Date().toISOString(),
+          };
+          handleUserAdded(newUser);
+        }}
       />
 
       {/* Header */}

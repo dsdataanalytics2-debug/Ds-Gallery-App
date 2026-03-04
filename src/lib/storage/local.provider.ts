@@ -15,7 +15,7 @@ export class LocalStorageProvider implements StorageProvider {
   async upload(
     file: Buffer | ArrayBuffer,
     filePath: string,
-    accountId?: string,
+    _accountId?: string,
   ): Promise<StorageResult> {
     try {
       // filePath should be folderId/fileName

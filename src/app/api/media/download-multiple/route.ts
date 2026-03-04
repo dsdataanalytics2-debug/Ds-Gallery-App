@@ -35,9 +35,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Permission check: Verify access for all folders involved
-    const folderIds = Array.from(new Set(mediaItems.map((m) => m.folderId)));
+    const folderIds = Array.from(
+      new Set(mediaItems.map((m) => m.folderId).filter(Boolean)),
+    );
+    const isAdmin =
+      sessionUser.role === "ADMIN" || sessionUser.role === "admin";
+
     for (const folderId of folderIds) {
-      const allowed = await hasFolderAccess(sessionUser.id, folderId);
+      const allowed =
+        isAdmin || (await hasFolderAccess(sessionUser.id, folderId as string));
       if (!allowed) {
         return NextResponse.json(
           { error: `Access denied to folder: ${folderId}` },
@@ -62,12 +68,18 @@ export async function POST(request: NextRequest) {
     const processFiles = async () => {
       try {
         for (const item of mediaItems) {
-          const storage = await getStorageProvider((item as any).storageType);
+          const m = item as {
+            storageType: string;
+            storageFileId: string;
+            googleAccountId?: string | null;
+            fileName: string;
+          };
+          const storage = await getStorageProvider(m.storageType);
           const buffer = await storage.download(
-            (item as any).storageFileId,
-            (item as any).googleAccountId || undefined,
+            m.storageFileId,
+            m.googleAccountId || undefined,
           );
-          archive.append(buffer, { name: (item as any).fileName });
+          archive.append(buffer, { name: m.fileName });
         }
         await archive.finalize();
       } catch (error) {
@@ -79,16 +91,17 @@ export async function POST(request: NextRequest) {
     processFiles();
 
     // Return the stream as a response
-    return new Response(stream as any, {
+    return new Response(stream as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="ds_gallery_export_${Date.now()}.zip"`,
       },
     });
-  } catch (error: any) {
-    console.error("Multiple download error:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Multiple download error:", err);
     return NextResponse.json(
-      { error: error?.message || "Failed to process multiple download" },
+      { error: err.message || "Failed to process multiple download" },
       { status: 500 },
     );
   }

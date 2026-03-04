@@ -22,6 +22,13 @@ interface ReplaceMediaModalProps {
   onSuccess: () => void;
 }
 
+interface UploadResponse {
+  cdnUrl: string;
+  publicId: string;
+  storageType: string;
+  thumbnailUrl?: string;
+}
+
 export default function ReplaceMediaModal({
   media,
   isOpen,
@@ -94,7 +101,7 @@ export default function ReplaceMediaModal({
         xhr.send(formData);
       });
 
-      const uploadData = (await uploadPromise) as any;
+      const uploadData = (await uploadPromise) as UploadResponse;
 
       // Step 2: Update the DB record (Replace)
       const patchRes = await fetch(`/api/media/${media.id}`, {
@@ -120,9 +127,10 @@ export default function ReplaceMediaModal({
       } else {
         throw new Error("Failed to update asset record");
       }
-    } catch (err: any) {
-      console.error("Replacement failed:", err);
-      setError(err.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Replacement failed:", error);
+      setError(error.message || "An unexpected error occurred");
     } finally {
       setIsUploading(false);
     }
@@ -160,7 +168,7 @@ export default function ReplaceMediaModal({
                       Replace Asset
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
-                      Swapping version for "{media.fileName}"
+                      Swapping version for &quot;{media.fileName}&quot;
                     </p>
                   </div>
                 </div>

@@ -59,13 +59,14 @@ export async function PATCH(
     });
 
     return NextResponse.json(updatedMedia);
-  } catch (error: any) {
-    console.error("Error updating thumbnail:", error);
+  } catch (error: unknown) {
+    const err = error as { message: string; stack?: string };
+    console.error("Error updating thumbnail:", err);
     return NextResponse.json(
       {
         error: "Failed to update thumbnail",
-        details: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        details: err.message,
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
       },
       { status: 500 },
     );

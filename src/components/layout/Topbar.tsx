@@ -10,11 +10,13 @@ import {
   Command,
   LogOut,
   Settings as SettingsIcon,
+  Sun,
+  Moon,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import UploadModal from "@/components/media/UploadModal";
 import NotificationDropdown from "./NotificationDropdown";
+import { useSettings } from "@/components/providers/SettingsProvider";
 
 export default function Topbar() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -23,6 +25,7 @@ export default function Topbar() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(
     null,
   );
+  const { darkTheme, setDarkTheme } = useSettings();
   const router = useRouter();
 
   useEffect(() => {
@@ -85,7 +88,7 @@ export default function Topbar() {
                 "p-2 rounded-lg transition-all relative group",
                 isNotificationsOpen
                   ? "bg-indigo-500/10 text-indigo-400"
-                  : "text-slate-400 hover:text-white hover:bg-white/5",
+                  : "text-slate-400 hover:text-indigo-500 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5",
               )}
             >
               <Bell
@@ -97,6 +100,18 @@ export default function Topbar() {
               <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-background animate-pulse"></span>
             </button>
           </div>
+
+          <button
+            onClick={() => setDarkTheme(!darkTheme)}
+            className="p-2 rounded-lg text-slate-400 hover:text-indigo-500 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+            title={darkTheme ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkTheme ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </button>
 
           <button
             onClick={() => {

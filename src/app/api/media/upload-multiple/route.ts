@@ -42,7 +42,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Permission check
-    const allowed = await hasFolderAccess(sessionUser.id, folderId);
+    const isAdmin =
+      sessionUser.role === "ADMIN" || sessionUser.role === "admin";
+    const allowed =
+      isAdmin || (await hasFolderAccess(sessionUser.id, folderId));
     if (!allowed) {
       return NextResponse.json(
         { error: "Access denied to folder" },
@@ -131,10 +134,11 @@ export async function POST(request: NextRequest) {
       }
       throw innerError;
     }
-  } catch (error: any) {
-    console.error("Multiple upload error:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Multiple upload error:", err);
     return NextResponse.json(
-      { error: error?.message || "Failed to upload multiple files" },
+      { error: err.message || "Failed to upload multiple files" },
       { status: 500 },
     );
   }

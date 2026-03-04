@@ -1,0 +1,246 @@
+﻿
+D:\DS-Gallery-App\src\app\admin\history\page.tsx
+  7:3  warning  'Filter' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\app\admin\users\page.tsx
+  34:10  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\app\analytics\page.tsx
+   15:3   warning  'Zap' is defined but never used  @typescript-eslint/no-unused-vars
+  271:47  warning  'i' is defined but never used    @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\app\api\folders\[id]\permissions\route.ts
+   51:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\folders\[id]\route.ts
+  100:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\folders\[id]\transfer\route.ts
+  103:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\folders\route.ts
+   23:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  190:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\[id]\proxy\route.ts
+    1:10  warning  'NextResponse' is defined but never used  @typescript-eslint/no-unused-vars
+    5:10  warning  'Readable' is defined but never used      @typescript-eslint/no-unused-vars
+   47:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:52  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:26  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+   92:26  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+   97:26  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  105:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:20  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  186:20  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  191:20  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  199:38  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\[id]\route.ts
+  166:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\[id]\thumbnail\route.ts
+  62:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\delete-multiple\route.ts
+   9:10  warning  'hasFolderAccess' is defined but never used  @typescript-eslint/no-unused-vars
+  86:19  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\download-multiple\route.ts
+  65:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  67:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  68:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  88:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\rename-multiple\route.ts
+   65:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\route.ts
+   10:8   warning  'fs' is defined but never used            @typescript-eslint/no-unused-vars
+   11:8   warning  'path' is defined but never used          @typescript-eslint/no-unused-vars
+   66:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\api\media\upload-multiple\route.ts
+  134:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\app\folders\[id]\page.tsx
+    9:3   warning  'Grid' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+   28:10  warning  'Sparkles' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+  109:6   warning  React Hook useEffect has a missing dependency: 'fetchFolder'. Either include it or remove the dependency array              react-hooks/exhaustive-deps
+  113:6   warning  React Hook useEffect has a missing dependency: 'fetchMedia'. Either include it or remove the dependency array               react-hooks/exhaustive-deps
+  121:6   warning  React Hook useEffect has missing dependencies: 'fetchMedia' and 'page'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\DS-Gallery-App\src\app\folders\page.tsx
+  11:8   warning  'Link' is defined but never used                                                                                              @typescript-eslint/no-unused-vars
+  13:10  warning  'cn' is defined but never used                                                                                                @typescript-eslint/no-unused-vars
+  57:6   warning  React Hook useEffect has a missing dependency: 'fetchFolders'. Either include it or remove the dependency array               react-hooks/exhaustive-deps
+  65:6   warning  React Hook useEffect has missing dependencies: 'fetchFolders' and 'page'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\DS-Gallery-App\src\app\login\page.tsx
+   3:20  warning  'useEffect' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   5:22  warning  'Sparkles' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  35:14  warning  'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  48:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\app\media\page.tsx
+    6:3   warning  'Filter' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    7:3   warning  'Loader2' is defined but never used                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+    8:12  warning  'ImageIcon' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    9:3   warning  'Video' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   10:3   warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   11:13  warning  'FolderIcon' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   17:10  warning  'Sparkles' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   96:6   warning  React Hook useEffect has a missing dependency: 'fetchMedia'. Either include it or remove the dependency array                                                                                                                                                                            react-hooks/exhaustive-deps
+  104:6   warning  React Hook useEffect has missing dependencies: 'fetchMedia' and 'page'. Either include them or remove the dependency array                                                                                                                                                               react-hooks/exhaustive-deps
+  119:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\app\page.tsx
+    6:3   warning  'LayoutDashboard' is defined but never used                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    7:3   warning  'LayoutGrid' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    8:3   warning  'List' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    9:3   warning  'Sparkles' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   14:3   warning  'Plus' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   15:3   warning  'Video' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   30:10  warning  'loading' is assigned a value but never used                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   54:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  142:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  153:31  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  300:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\components\admin\AddUserModal.tsx
+  18:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  67:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\components\auth\AuthGuard.tsx
+  37:11  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\DS-Gallery-App\src\components\auth\AuthGuard.tsx:37:11
+  35 |           router.push("/");
+  36 |         } else {
+> 37 |           setIsAuthenticated(true);
+     |           ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  38 |         }
+  39 |       } catch (e) {
+  40 |         localStorage.removeItem("token");  react-hooks/set-state-in-effect
+  39:16  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\components\folders\CreateFolderModal.tsx
+  135:16  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  165:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\components\folders\FolderCard.tsx
+   8:3   warning  'Settings' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  74:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\components\folders\FolderSettingsModal.tsx
+  84:6  warning  React Hook useEffect has missing dependencies: 'fetchPermissions' and 'folder.ownerId'. Either include them or remove the dependency array. If 'setIsOwner' needs the current value of 'folder.ownerId', you can also switch to useReducer instead of useState and read 'folder.ownerId' in the reducer  react-hooks/exhaustive-deps
+
+D:\DS-Gallery-App\src\components\layout\GlobalSearch.tsx
+   4:37  warning  'Film' is defined but never used             @typescript-eslint/no-unused-vars
+   4:43  warning  'X' is defined but never used                @typescript-eslint/no-unused-vars
+   4:46  warning  'Command' is defined but never used          @typescript-eslint/no-unused-vars
+  10:9   warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\components\layout\NotificationDropdown.tsx
+  14:3   warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+  16:25  warning  'cn' is defined but never used           @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\components\layout\Sidebar.tsx
+   15:3   warning  'Sparkles' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   64:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  141:9   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+
+D:\DS-Gallery-App\src\components\layout\Topbar.tsx
+  14:8  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\components\media\BulkRenameModal.tsx
+  6:10  warning  'cn' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\DS-Gallery-App\src\components\media\MediaGrid.tsx
+  238:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  270:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  276:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\components\media\MediaPreviewDrawer.tsx
+   55:10  warning  'downloadEta' is assigned a value but never used                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  383:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  508:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\components\media\MoveMediaModal.tsx
+   55:52  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  171:55  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  171:69  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+D:\DS-Gallery-App\src\components\media\RenameMediaModal.tsx
+  26:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\DS-Gallery-App\src\components\media\RenameMediaModal.tsx:26:7
+  24 |   useEffect(() => {
+  25 |     if (isOpen) {
+> 26 |       setNewName(currentName);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |     }
+  28 |   }, [isOpen, currentName]);
+  29 |  react-hooks/set-state-in-effect
+
+D:\DS-Gallery-App\src\components\media\ReplaceMediaModal.tsx
+    3:33  warning  'useEffect' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   12:3   warning  'FileText' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   97:51  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  123:19  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  163:44  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  163:61  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  183:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\components\media\UploadModal.tsx
+  207:6   warning  React Hook useEffect has a missing dependency: 'thumbnails'. Either include it or remove the dependency array                                                                                                                                                                            react-hooks/exhaustive-deps
+  599:35  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  616:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  764:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  963:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\components\settings\GoogleDriveConnect.tsx
+  52:7  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\DS-Gallery-App\src\lib\storage\local.provider.ts
+  18:5   warning  'accountId' is defined but never used  @typescript-eslint/no-unused-vars
+  47:34  warning  'accountId' is defined but never used  @typescript-eslint/no-unused-vars
+  66:32  warning  'accountId' is defined but never used  @typescript-eslint/no-unused-vars
+  85:5   warning  'accountId' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 137 problems (55 errors, 82 warnings)
+

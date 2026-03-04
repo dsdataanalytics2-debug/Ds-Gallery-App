@@ -46,9 +46,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("app-settings", JSON.stringify(settings));
 
       // Apply dark mode class to HTML
+      // Apply theme class to HTML
       if (settings.darkTheme) {
         document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
       } else {
+        document.documentElement.classList.add("light");
         document.documentElement.classList.remove("dark");
       }
 

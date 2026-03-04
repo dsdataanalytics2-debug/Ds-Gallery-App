@@ -59,9 +59,6 @@ export async function DELETE(
         where: { ownerId: id },
         data: { ownerId: sessionUser.id },
       });
-      console.log(
-        `Safety Net: Folders owned by user ${id} transferred to admin ${sessionUser.id}`,
-      );
     }
 
     // Also delete any folder permissions granted to this user

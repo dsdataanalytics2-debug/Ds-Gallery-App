@@ -8,9 +8,7 @@ import {
   Folder as FolderIcon,
   Layers,
 } from "lucide-react";
-import Link from "next/link";
 import { Folder } from "@/types";
-import { cn } from "@/lib/utils";
 import CreateFolderModal from "@/components/folders/CreateFolderModal";
 import FolderCard from "@/components/folders/FolderCard";
 import Pagination from "@/components/ui/Pagination";

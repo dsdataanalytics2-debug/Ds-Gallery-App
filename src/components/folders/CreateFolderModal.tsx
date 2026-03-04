@@ -132,7 +132,7 @@ export default function CreateFolderModal({
       let data;
       try {
         data = JSON.parse(responseText);
-      } catch (e) {
+      } catch {
         data = { error: "Invalid JSON response from server" };
       }
 
@@ -162,9 +162,10 @@ export default function CreateFolderModal({
           );
         }
       }
-    } catch (error: any) {
-      console.error("Error creating folder:", error);
-      setError(error.message || "An unexpected error occurred");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error("Error creating folder:", err);
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }

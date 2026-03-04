@@ -68,6 +68,9 @@ export default function UploadModal({
   const [isCustomThumb, setIsCustomThumb] = useState<{
     [key: string]: boolean;
   }>({});
+  const [isGeneratingThumb, setIsGeneratingThumb] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -182,8 +185,20 @@ export default function UploadModal({
   useEffect(() => {
     const generateThumbs = async () => {
       const newThumbs = { ...thumbnails };
+      const newGeneratingStatus = { ...isGeneratingThumb };
       let changed = false;
 
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const key = getFileKey(file);
+        if (file.type.startsWith("video") && !newThumbs[key]) {
+          newGeneratingStatus[key] = true;
+          changed = true;
+        }
+      }
+      if (changed) setIsGeneratingThumb(newGeneratingStatus);
+
+      changed = false;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const key = getFileKey(file);
@@ -192,15 +207,19 @@ export default function UploadModal({
             const { captureVideoFrame } = await import("@/lib/media-utils");
             const blob = await captureVideoFrame(file);
             newThumbs[key] = blob;
+            newGeneratingStatus[key] = false;
             changed = true;
           } catch (error) {
             console.error("Failed to capture frame:", error);
+            newGeneratingStatus[key] = false;
+            changed = true;
           }
         }
       }
 
       if (changed) {
         setThumbnails(newThumbs);
+        setIsGeneratingThumb(newGeneratingStatus);
       }
     };
     generateThumbs();
@@ -618,6 +637,10 @@ export default function UploadModal({
                                       className="w-full h-full object-cover"
                                       alt="thumb"
                                     />
+                                  ) : isGeneratingThumb[fileKey] ? (
+                                    <div className="flex flex-col items-center justify-center h-full w-full bg-slate-900">
+                                      <Loader2 className="h-4 w-4 text-indigo-500 animate-spin" />
+                                    </div>
                                   ) : (
                                     <Film className="h-6 w-6 text-indigo-400" />
                                   );
@@ -896,7 +919,9 @@ export default function UploadModal({
                 </div>
                 <button
                   disabled={
-                    files.length === 0 || selectedFolderIds.length === 0
+                    files.length === 0 ||
+                    selectedFolderIds.length === 0 ||
+                    Object.values(isGeneratingThumb).some((v) => v)
                   }
                   onClick={handleUpload}
                   className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:grayscale text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition-all group lg:text-base"

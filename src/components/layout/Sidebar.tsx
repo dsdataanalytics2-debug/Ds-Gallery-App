@@ -1,8 +1,10 @@
 "use client";
+import React from "react";
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -12,10 +14,10 @@ import {
   History,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   LogOut,
   Users,
   ShieldAlert,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,10 +63,13 @@ export default function Sidebar() {
       <div className="h-16 flex items-center px-6 border-b border-border">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-9 h-9 relative flex items-center justify-center group-hover:scale-110 transition-transform">
-            <img
+            <Image
               src="/logo-v2.jpg"
               alt="Logo"
-              className="w-full h-full object-contain"
+              width={36}
+              height={36}
+              className="object-contain"
+              priority
             />
           </div>
         </Link>
@@ -138,7 +143,7 @@ function MenuItem({
   isActive,
   isCollapsed,
 }: {
-  item: any;
+  item: { icon: LucideIcon; label: string; href: string };
   isActive: boolean;
   isCollapsed: boolean;
 }) {

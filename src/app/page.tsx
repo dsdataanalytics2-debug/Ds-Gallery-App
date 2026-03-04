@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  LayoutDashboard,
-  LayoutGrid,
-  List,
-  Sparkles,
   FolderPlus,
   Image as ImageIcon,
   Film,
   Folder as FolderIcon,
-  Plus,
-  Video,
   Upload,
   ArrowUpRight,
   Clock,
@@ -27,7 +22,6 @@ import { formatTimeAgo } from "@/lib/utils";
 export default function Home() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [recentMedia, setRecentMedia] = useState<Media[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -58,10 +52,8 @@ export default function Home() {
       if (result && Array.isArray(result.data)) {
         setFolders(result.data);
       }
-    } catch (error) {
-      console.error("Dashboard: Failed to fetch folders:", error);
     } finally {
-      setLoading(false);
+      // Loading state removed as it was unused
     }
   };
 
@@ -121,8 +113,8 @@ export default function Home() {
             total: data.summary?.totalMedia || 0,
           });
         }
-      } catch (e) {
-        console.error("Dashboard: Failed to fetch analytics stats", e);
+      } catch {
+        console.error("Dashboard: Failed to fetch analytics stats");
       }
     };
     fetchStats();
@@ -139,10 +131,12 @@ export default function Home() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20">
-            <img
+            <Image
               src="/logo-v2.jpg"
-              className="h-3.5 w-3.5 object-contain"
-              alt=""
+              width={14}
+              height={14}
+              className="object-contain"
+              alt="System Logo"
             />
             <span>Premium Media Management</span>
           </div>
@@ -150,8 +144,8 @@ export default function Home() {
             Dashboard
           </h1>
           <p className="text-slate-400 max-w-xl">
-            Welcome back. Here's an overview of your digital assets and recent
-            activity.
+            Welcome back. Here&apos;s an overview of your digital assets and
+            recent activity.
           </p>
         </div>
 
@@ -295,12 +289,14 @@ export default function Home() {
                   className="p-4 hover:bg-white/5 transition-colors group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden group-hover:ring-2 group-hover:ring-indigo-500/50 transition-all">
+                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden group-hover:ring-2 group-hover:ring-indigo-500/50 transition-all relative">
                       {item.thumbnailUrl ? (
-                        <img
+                        <Image
                           src={item.thumbnailUrl}
                           alt={item.fileName}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="48px"
                         />
                       ) : (
                         <ImageIcon className="h-6 w-6 text-slate-600" />

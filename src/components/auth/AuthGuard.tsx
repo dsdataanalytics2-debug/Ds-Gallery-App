@@ -12,38 +12,45 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
-    if (!token) {
-      if (pathname !== "/login") {
-        router.push("/login");
-      }
-      // No token + on /login: just stay, login page renders below
-      return;
-    }
-
-    if (token && pathname === "/login") {
-      router.push("/");
-      return;
-    }
-
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        if (pathname.startsWith("/admin") && user.role !== "admin") {
-          router.push("/");
-        } else {
-          setIsAuthenticated(true);
+    const checkAuth = () => {
+      if (!token) {
+        if (pathname !== "/login") {
+          router.push("/login");
         }
-      } catch (e) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        router.push("/login");
+        return;
       }
-    } else {
-      setIsAuthenticated(true); // token exists but no user object
-    }
+
+      if (token && pathname === "/login") {
+        router.push("/");
+        return;
+      }
+
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (pathname.startsWith("/admin") && user.role !== "admin") {
+            router.push("/");
+          } else {
+            setIsAuthenticated((prev) => (prev === true ? prev : true));
+          }
+        } catch {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.push("/login");
+        }
+      } else {
+        setIsAuthenticated((prev) => (prev === true ? prev : true));
+      }
+    };
+
+    // Use a small delay to move it out of the main effect execution
+    const timer = setTimeout(checkAuth, 10);
+    return () => clearTimeout(timer);
   }, [pathname, router]);
 
   // Show login page immediately — no need to wait for auth state

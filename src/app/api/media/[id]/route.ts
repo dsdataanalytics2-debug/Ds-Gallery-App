@@ -161,10 +161,11 @@ export async function PATCH(
         storageType: body.storageType ?? existing.storageType,
         thumbnailUrl: body.thumbnailUrl ?? existing.thumbnailUrl,
         isCustomThumbnail: body.isCustomThumbnail ?? existing.isCustomThumbnail,
+        folderId: body.folderId ?? existing.folderId,
         metadata: {
           ...(existing.metadata as any),
           ...(body.metadata || {}),
-        },
+        } as any,
       },
     });
 
@@ -182,10 +183,11 @@ export async function PATCH(
     }
 
     return NextResponse.json(updated);
-  } catch (error) {
-    console.error("Error updating/replacing media:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Error updating/replacing media:", err);
     return NextResponse.json(
-      { error: "Failed to update asset", details: (error as Error).message },
+      { error: "Failed to update asset", details: err.message },
       { status: 500 },
     );
   }

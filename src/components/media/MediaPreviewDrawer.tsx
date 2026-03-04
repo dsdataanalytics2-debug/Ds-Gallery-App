@@ -6,12 +6,8 @@ import {
   X,
   Download,
   Trash2,
-  Info,
   Maximize2,
-  Tag,
   ExternalLink,
-  ChevronRight,
-  Clock,
   Play,
   Pause,
   Volume2,
@@ -27,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { Media } from "@/types";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import ReplaceMediaModal from "./ReplaceMediaModal";
+import RenameMediaModal from "./RenameMediaModal";
+import MoveMediaModal from "./MoveMediaModal";
 
 interface MediaPreviewDrawerProps {
   media: Media | null;
@@ -44,24 +42,39 @@ export default function MediaPreviewDrawer({
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSpeed, setDownloadSpeed] = useState(0);
-  const [downloadEta, setDownloadEta] = useState<number | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [isOperationProcessing, setIsOperationProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (videoRef.current) {
-      if (isPlaying) videoRef.current.play();
-      else videoRef.current.pause();
+      if (isPlaying) {
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            if (error.name === "AbortError") {
+              console.log(
+                "Playback interrupted (expected during rapid UI changes)",
+              );
+            } else {
+              console.error("Playback error:", error);
+            }
+          });
+        }
+      } else {
+        videoRef.current.pause();
+      }
     }
-  }, [isPlaying, media?.id]); // Also restart on media change
+  }, [isPlaying, media?.id]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -89,12 +102,7 @@ export default function MediaPreviewDrawer({
   const handleToggleMute = () => setIsMuted(!isMuted);
 
   const handleReplaceSuccess = () => {
-    // We already onClose in the modal for a cleaner flow,
-    // but we need to signal the parent to refresh.
     router.refresh();
-    // Since we are in a drawer, the media object might need re-fetching
-    // or the parent will re-open it if selectedAsset is kept.
-    // The simplest is to refresh and close.
     onClose();
   };
 
@@ -119,13 +127,13 @@ export default function MediaPreviewDrawer({
       });
 
       if (res.ok) {
-        router.refresh(); // Refresh to show new thumbnail
+        router.refresh();
       } else {
         const data = await res.json();
         alert(data.error || "Failed to update thumbnail");
       }
-    } catch (error) {
-      console.error("Error updating thumbnail:", error);
+    } catch {
+      console.error("Error updating thumbnail");
       alert("An error occurred while updating the thumbnail");
     }
   };
@@ -156,11 +164,71 @@ export default function MediaPreviewDrawer({
         const data = await res.json();
         alert(data.error || "Failed to delete asset");
       }
-    } catch (error) {
-      console.error("Error deleting asset:", error);
+    } catch {
+      console.error("Error deleting asset");
       alert("An error occurred while deleting the asset");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleRename = async (newName: string) => {
+    if (!media) return;
+    setIsOperationProcessing(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/media/${media.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+        body: JSON.stringify({ fileName: newName }),
+      });
+
+      if (res.ok) {
+        setIsRenameModalOpen(false);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to rename asset");
+      }
+    } catch {
+      console.error("Error renaming asset");
+      alert("An error occurred while renaming the asset");
+    } finally {
+      setIsOperationProcessing(false);
+    }
+  };
+
+  const handleMove = async (folderId: string) => {
+    if (!media) return;
+    setIsOperationProcessing(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/media/${media.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-user-data": localStorage.getItem("user") || "",
+        },
+        body: JSON.stringify({ folderId: folderId || null }),
+      });
+
+      if (res.ok) {
+        setIsMoveModalOpen(false);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to move asset");
+      }
+    } catch {
+      console.error("Error moving asset");
+      alert("An error occurred while moving the asset");
+    } finally {
+      setIsOperationProcessing(false);
     }
   };
 
@@ -192,8 +260,6 @@ export default function MediaPreviewDrawer({
   const handleDownload = async () => {
     if (!media) return;
 
-    // For Google Drive, we must use the proxy to avoid CORS issues
-    // and rely on browser capability to handle the download
     const isGoogleDrive =
       media.storageType === "gdrive" ||
       media.storageType === "google-drive" ||
@@ -203,10 +269,9 @@ export default function MediaPreviewDrawer({
       const token = localStorage.getItem("token");
       const downloadUrl = `/api/media/${media.id}/proxy?token=${token}&download=true`;
 
-      // Trigger download by creating a temporary link
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = media.fileName; // This might be overridden by Content-Disposition, but good to have
+      a.download = media.fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -216,7 +281,6 @@ export default function MediaPreviewDrawer({
     setIsDownloading(true);
     setDownloadProgress(0);
     setDownloadSpeed(0);
-    setDownloadEta(null);
 
     try {
       const response = await fetch(media.cdnUrl);
@@ -230,8 +294,7 @@ export default function MediaPreviewDrawer({
 
       let receivedLength = 0;
       const chunks = [];
-      const startTime = Date.now();
-      let lastTime = startTime;
+      let lastTime = Date.now();
       let lastReceived = 0;
 
       while (true) {
@@ -250,8 +313,6 @@ export default function MediaPreviewDrawer({
           setDownloadSpeed(speed);
 
           if (total) {
-            const remaining = total - receivedLength;
-            setDownloadEta(remaining / speed);
             setDownloadProgress((receivedLength / total) * 100);
           }
 
@@ -269,8 +330,8 @@ export default function MediaPreviewDrawer({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
-      console.error("Download Error:", error);
+    } catch {
+      console.error("Download Error");
       alert("Failed to download file. Please try again.");
     } finally {
       setIsDownloading(false);
@@ -279,7 +340,6 @@ export default function MediaPreviewDrawer({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
           "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300",
@@ -288,14 +348,12 @@ export default function MediaPreviewDrawer({
         onClick={onClose}
       />
 
-      {/* Drawer */}
       <div
         className={cn(
           "fixed right-0 top-0 h-full w-full sm:w-[500px] z-50 bg-slate-950 border-l border-white/5 shadow-2xl transition-transform duration-500 ease-out flex flex-col",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
-        {/* Header */}
         <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 shrink-0">
           <h3 className="text-sm font-bold text-white uppercase tracking-widest">
             Asset Details
@@ -309,30 +367,9 @@ export default function MediaPreviewDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Preview Area */}
           <div className="aspect-video bg-black border-b border-white/5 relative group overflow-hidden">
             {media.fileType === "video" ? (
               <div className="w-full h-full relative">
-                {isLoading && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
-                    <img
-                      src={
-                        media.storageType === "gdrive" ||
-                        media.storageType === "google-drive"
-                          ? `/api/media/${media.id}/proxy?type=thumbnail&token=${localStorage.getItem("token")}`
-                          : media.thumbnailUrl || "/video-placeholder.png"
-                      }
-                      className="absolute inset-0 w-full h-full object-cover blur-sm opacity-50"
-                      alt="blur"
-                    />
-                    <div className="relative z-20 flex flex-col items-center">
-                      <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
-                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                        Loading preview...
-                      </p>
-                    </div>
-                  </div>
-                )}
                 <video
                   ref={videoRef}
                   src={
@@ -341,15 +378,17 @@ export default function MediaPreviewDrawer({
                       ? `/api/media/${media.id}/proxy?token=${localStorage.getItem("token")}`
                       : media.cdnUrl
                   }
+                  poster={
+                    media.thumbnailUrl
+                      ? media.thumbnailUrl.replace("=s220", "=s2048")
+                      : undefined
+                  }
                   className="w-full h-full object-contain"
-                  onLoadStart={() => setIsLoading(true)}
-                  onCanPlay={() => setIsLoading(false)}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleTimeUpdate}
                   onClick={handleTogglePlay}
                 />
 
-                {/* Auto-generated Indicator */}
                 {!media.isCustomThumbnail && (
                   <div className="absolute top-4 left-4 z-20">
                     <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-bold text-slate-400 tracking-wider flex items-center gap-1.5">
@@ -359,10 +398,8 @@ export default function MediaPreviewDrawer({
                   </div>
                 )}
 
-                {/* Custom Controls */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                   <div className="space-y-4">
-                    {/* Progress Bar */}
                     <div
                       className="h-1.5 w-full bg-white/20 rounded-full cursor-pointer relative group/progress"
                       onClick={handleSeek}
@@ -370,10 +407,6 @@ export default function MediaPreviewDrawer({
                       <div
                         className="h-full bg-indigo-500 rounded-full transition-all duration-100"
                         style={{ width: `${progress}%` }}
-                      />
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
-                        style={{ left: `${progress}%`, marginLeft: "-6px" }}
                       />
                     </div>
 
@@ -446,7 +479,7 @@ export default function MediaPreviewDrawer({
                     media.storageType === "google-drive" ||
                     (media.cdnUrl && media.cdnUrl.includes("drive.google.com"))
                       ? `/api/media/${media.id}/proxy?token=${localStorage.getItem("token")}`
-                      : media.cdnUrl
+                      : media.thumbnailUrl || media.cdnUrl
                   }
                   className="w-full h-full object-contain"
                   alt={media.fileName}
@@ -458,7 +491,6 @@ export default function MediaPreviewDrawer({
             )}
           </div>
 
-          {/* Content */}
           <div className="p-8 space-y-10">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -470,24 +502,16 @@ export default function MediaPreviewDrawer({
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>{(media.fileSize / (1024 * 1024)).toFixed(2)} MB</span>
-                </div>
+                <span className="font-medium">
+                  {(media.fileSize / (1024 * 1024)).toFixed(2)} MB
+                </span>
                 <div className="w-1 h-1 rounded-full bg-slate-800" />
                 <span className="font-medium">
                   {media.fileFormat.toUpperCase()}
                 </span>
-                {media.fileType === "video" && (
-                  <>
-                    <div className="w-1 h-1 rounded-full bg-slate-800" />
-                    <span className="font-medium">1080p (FHD)</span>
-                  </>
-                )}
               </div>
             </div>
 
-            {/* Action Grid */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 disabled={isDownloading}
@@ -497,12 +521,6 @@ export default function MediaPreviewDrawer({
                   isDownloading && "border-indigo-500/50 bg-indigo-500/10",
                 )}
               >
-                {isDownloading && (
-                  <div
-                    className="absolute bottom-0 left-0 h-1 bg-indigo-500 transition-all duration-300"
-                    style={{ width: `${downloadProgress}%` }}
-                  />
-                )}
                 <Download
                   className={cn(
                     "h-5 w-5 group-hover:text-indigo-400",
@@ -511,18 +529,17 @@ export default function MediaPreviewDrawer({
                 />
                 <div className="text-left">
                   <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
-                    {isDownloading
-                      ? `${Math.round(downloadProgress)}%`
-                      : "Download"}
+                    Download
                   </p>
                   <p className="text-[9px] text-slate-600 font-bold">
-                    {isDownloading
-                      ? `${(downloadSpeed / (1024 * 1024)).toFixed(1)} MB/s`
-                      : "Save to device"}
+                    Save to device
                   </p>
                 </div>
               </button>
-              <button className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-white transition-all group">
+              <button
+                onClick={() => setIsMoveModalOpen(true)}
+                className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-white transition-all group"
+              >
                 <Move className="h-5 w-5 group-hover:text-indigo-400" />
                 <div className="text-left">
                   <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
@@ -533,7 +550,10 @@ export default function MediaPreviewDrawer({
                   </p>
                 </div>
               </button>
-              <button className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-white transition-all group">
+              <button
+                onClick={() => setIsRenameModalOpen(true)}
+                className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-white transition-all group"
+              >
                 <Edit className="h-5 w-5 group-hover:text-indigo-400" />
                 <div className="text-left">
                   <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
@@ -596,25 +616,7 @@ export default function MediaPreviewDrawer({
               </button>
             </div>
 
-            {/* Advanced info */}
             <div className="space-y-6 pt-6 border-t border-white/5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                    <Tag className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      Metadata & Tags
-                    </p>
-                    <p className="text-[10px] font-bold text-slate-500">
-                      Enhanced Searchable Data
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-600" />
-              </div>
-
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
@@ -625,24 +627,21 @@ export default function MediaPreviewDrawer({
                       Origin Source
                     </p>
                     <p className="text-[10px] font-bold text-slate-500">
-                      S3/Cloudinary Reference
+                      Cloud Storage Reference
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-600" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="h-20 border-t border-white/5 p-6 flex items-center justify-between bg-white/[0.01]">
-          <button className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-white transition-colors">
-            <Info className="h-4 w-4" />
-            Full History
-          </button>
-          <button className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-600/20">
-            Edit Metadata
+        <div className="h-20 border-t border-white/5 p-6 flex items-center justify-end bg-white/[0.01]">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+          >
+            Close
           </button>
         </div>
       </div>
@@ -662,6 +661,22 @@ export default function MediaPreviewDrawer({
         media={media}
         onClose={() => setIsReplaceModalOpen(false)}
         onSuccess={handleReplaceSuccess}
+      />
+
+      <RenameMediaModal
+        isOpen={isRenameModalOpen}
+        onClose={() => setIsRenameModalOpen(false)}
+        onConfirm={handleRename}
+        currentName={media.fileName}
+        isProcessing={isOperationProcessing}
+      />
+
+      <MoveMediaModal
+        isOpen={isMoveModalOpen}
+        onClose={() => setIsMoveModalOpen(false)}
+        onConfirm={handleMove}
+        currentFolderId={media.folderId}
+        isProcessing={isOperationProcessing}
       />
     </>
   );

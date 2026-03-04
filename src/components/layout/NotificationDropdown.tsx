@@ -9,11 +9,10 @@ import {
   Download,
   RefreshCcw,
   Edit3,
-  Clock,
   CheckCircle2,
-  AlertCircle,
+  Clock,
 } from "lucide-react";
-import { formatTimeAgo, cn } from "@/lib/utils";
+import { formatTimeAgo } from "@/lib/utils";
 
 interface AuditLog {
   id: string;

@@ -12,7 +12,6 @@ import {
   HardDrive,
   Image as ImageIcon,
   Film,
-  Zap,
   Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -147,9 +146,9 @@ export default function AnalyticsPage() {
 
       {/* High-Level Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsList.map((stat, i) => (
+        {statsList.map((stat) => (
           <div
-            key={i}
+            key={stat.label}
             className="bg-card border border-border p-6 rounded-3xl group hover:border-white/20 transition-all duration-300 relative overflow-hidden"
           >
             <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/[0.02] rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />

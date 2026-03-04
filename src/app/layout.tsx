@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
+import { ToastProvider } from "@/context/ToastContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,9 +27,11 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-screen bg-background text-foreground antialiased custom-scrollbar`}
       >
-        <SettingsProvider>
-          <AuthGuard>{children}</AuthGuard>
-        </SettingsProvider>
+        <ToastProvider>
+          <SettingsProvider>
+            <AuthGuard>{children}</AuthGuard>
+          </SettingsProvider>
+        </ToastProvider>
       </body>
     </html>
   );

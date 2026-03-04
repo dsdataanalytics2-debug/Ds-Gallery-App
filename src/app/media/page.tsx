@@ -1,20 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Search,
-  Filter,
-  Loader2,
-  Image as ImageIcon,
-  Video,
-  Calendar,
-  Folder as FolderIcon,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search } from "lucide-react";
 import { Media } from "@/types";
 import MediaGrid from "@/components/media/MediaGrid";
 import FilterPanel from "@/components/media/FilterPanel";
 import MediaPreviewDrawer from "@/components/media/MediaPreviewDrawer";
-import { Sparkles } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 
 export default function AllMediaPage() {
@@ -29,7 +20,7 @@ export default function AllMediaPage() {
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchGlobalStats = async () => {
+  const fetchGlobalStats = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch("/api/analytics", {
@@ -51,9 +42,9 @@ export default function AllMediaPage() {
     } catch (error) {
       console.error("Failed to fetch global stats:", error);
     }
-  };
+  }, []);
 
-  const fetchMedia = async () => {
+  const fetchMedia = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -85,7 +76,7 @@ export default function AllMediaPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, searchQuery, filter, activeCollections]);
 
   useEffect(() => {
     fetchGlobalStats();

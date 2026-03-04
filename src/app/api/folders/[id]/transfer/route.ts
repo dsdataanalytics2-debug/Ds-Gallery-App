@@ -6,6 +6,8 @@ import {
   getAuthenticatedUser,
 } from "@/lib/auth";
 
+import { logActivity } from "@/lib/audit";
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,7 +30,7 @@ export async function PATCH(
     // 1. Fetch current folder to check permissions
     const folder = await prisma.folder.findUnique({
       where: { id: folderId },
-      select: { ownerId: true },
+      select: { ownerId: true, name: true },
     });
 
     if (!folder) {
@@ -52,6 +54,7 @@ export async function PATCH(
     // 3. Verify new owner exists
     const newOwner = await prisma.user.findUnique({
       where: { id: newOwnerId },
+      select: { id: true, name: true, email: true },
     });
 
     if (!newOwner) {
@@ -61,20 +64,47 @@ export async function PATCH(
       );
     }
 
-    // 4. Perform transfer
-    const updatedFolder = await prisma.folder.update({
-      where: { id: folderId },
-      data: { ownerId: newOwnerId },
+    // 4. Define recursive function to update all subfolders
+    const transferFolderRecursively = async (currentFolderId: string) => {
+      // Update the folder itself
+      await prisma.folder.update({
+        where: { id: currentFolderId },
+        data: { ownerId: newOwnerId },
+      });
+
+      // Find children
+      const children = await prisma.folder.findMany({
+        where: { parentId: currentFolderId },
+        select: { id: true },
+      });
+
+      // Recurse for each child
+      for (const child of children) {
+        await transferFolderRecursively(child.id);
+      }
+    };
+
+    // 5. Perform recursive transfer
+    await transferFolderRecursively(folderId);
+
+    // 6. Log the activity
+    await logActivity({
+      userId: sessionUser.id,
+      userName: sessionUser.name,
+      action: "TRANSFER",
+      folderId: folderId,
+      folderName: folder.name,
     });
 
     return NextResponse.json({
-      message: "Ownership transferred successfully",
-      folder: updatedFolder,
+      message: "Ownership transferred successfully (including subfolders)",
+      folder: { id: folderId, name: folder.name, ownerId: newOwnerId },
     });
-  } catch (error: any) {
-    console.error("Transfer Error:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Transfer Error:", err);
     return NextResponse.json(
-      { error: "Failed to transfer ownership", message: error.message },
+      { error: "Failed to transfer ownership", message: err.message },
       { status: 500 },
     );
   }

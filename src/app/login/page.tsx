@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, Sparkles } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

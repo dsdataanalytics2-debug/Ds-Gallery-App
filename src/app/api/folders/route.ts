@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   verifyAuth,
   unauthorizedResponse,
@@ -20,17 +21,20 @@ export async function GET(request: Request) {
     const sessionUser = getAuthenticatedUser(request);
     if (!sessionUser) return unauthorizedResponse();
 
-    const where: any = {
-      AND: [],
-    };
+    const where: Prisma.FolderWhereInput & { AND: Prisma.FolderWhereInput[] } =
+      {
+        AND: [],
+      };
 
     // If not admin, restrict to owned or permitted folders
     // Plus any folders that are public (handled via ID injection to avoid Prisma sync issues)
     if (sessionUser.role !== "admin") {
       let publicFolderIds: string[] = [];
       try {
-        const publicFolders: any[] =
-          await prisma.$queryRaw`SELECT id FROM "Folder" WHERE "isPublic" = true`;
+        const publicFolders =
+          (await prisma.$queryRaw`SELECT id FROM "Folder" WHERE "isPublic" = true`) as {
+            id: string;
+          }[];
         publicFolderIds = publicFolders.map((f) => f.id);
       } catch (e) {
         console.warn("Could not fetch public folders via raw SQL:", e);
@@ -89,7 +93,7 @@ export async function GET(request: Request) {
 
     // CRITICAL FIX #4: Calculate separate image/video counts
     const foldersWithCounts = await Promise.all(
-      folders.map(async (folder: any) => {
+      folders.map(async (folder) => {
         const [imageCount, videoCount] = await Promise.all([
           prisma.media.count({
             where: { folderId: folder.id, fileType: "image" },
@@ -116,13 +120,14 @@ export async function GET(request: Request) {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
-    console.error("Error fetching folders:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Error fetching folders:", err);
     return NextResponse.json(
       {
         error: "Failed to fetch folders",
-        details: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        details: err.message,
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
       },
       { status: 500 },
     );
@@ -161,12 +166,13 @@ export async function POST(request: Request) {
 
     // Create the folder without isPublic first to avoid Prisma Client sync issues
     // We'll update it immediately after using raw SQL if needed
-    const folder = await (prisma.folder as any).create({
+    const folder = await prisma.folder.create({
       data: {
         name,
         description,
         tags: tags || [],
         productCategory,
+        isPublic: isPublic === true,
         parent: effectiveParentId
           ? { connect: { id: effectiveParentId } }
           : undefined,
@@ -187,11 +193,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(folder);
-  } catch (error: any) {
-    console.error("Error creating folder:", error);
+  } catch (error: unknown) {
+    const err = error as { code?: string; message: string; stack?: string };
+    console.error("Error creating folder:", err);
 
     // Handle foreign key violation or missing record (stale user ID)
-    if (error.code === "P2003" || error.code === "P2025") {
+    if (err.code === "P2003" || err.code === "P2025") {
       return NextResponse.json(
         {
           error: "Session data mismatch",
@@ -205,9 +212,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "Failed to create folder",
-        message: error.message,
-        details:
-          process.env.NODE_ENV === "development" ? error.stack : undefined,
+        message: err.message,
+        details: process.env.NODE_ENV === "development" ? err.stack : undefined,
       },
       { status: 500 },
     );

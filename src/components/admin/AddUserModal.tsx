@@ -15,7 +15,12 @@ import {
 interface AddUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUserAdded: (user: any) => void;
+  onUserAdded: (user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  }) => void;
 }
 
 export default function AddUserModal({
@@ -64,8 +69,9 @@ export default function AddUserModal({
         onUserAdded(data);
         handleClose();
       }, 1500);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const e = err as Error;
+      setError(e.message);
     } finally {
       setLoading(false);
     }

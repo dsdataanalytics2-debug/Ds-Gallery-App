@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Folder, ImageIcon, Film, X, Command } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Search, Folder, ImageIcon } from "lucide-react";
 
 export default function GlobalSearch() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const router = useRouter();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "k" && (e.metaKey || e.ctrlKey)) {

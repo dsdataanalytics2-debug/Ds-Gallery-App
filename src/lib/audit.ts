@@ -5,7 +5,8 @@ export type AuditAction =
   | "DELETE"
   | "DOWNLOAD"
   | "REPLACE"
-  | "RENAME";
+  | "RENAME"
+  | "TRANSFER";
 
 interface AuditLogParams {
   userId: string;

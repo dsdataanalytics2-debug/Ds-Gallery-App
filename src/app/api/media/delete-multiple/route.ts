@@ -32,15 +32,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Permission check
-    const folderIds = Array.from(new Set(mediaItems.map((m) => m.folderId)));
-    const isAdmin = sessionUser.role === "admin";
+    const folderIds = Array.from(
+      new Set(mediaItems.map((m) => m.folderId).filter(Boolean)),
+    );
+    const isAdmin =
+      sessionUser.role === "ADMIN" || sessionUser.role === "admin";
 
     if (!isAdmin) {
       for (const folderId of folderIds) {
         // Only allow owners to delete multiple items from a folder
         // hasFolderAccess might return true for public folders, but we want to restrict deletion
         const folder = await prisma.folder.findUnique({
-          where: { id: folderId },
+          where: { id: folderId as string },
           select: { ownerId: true },
         });
 
@@ -59,10 +62,6 @@ export async function POST(request: NextRequest) {
         const fileIdToDelete = item.storageFileId || item.storagePath;
 
         if (fileIdToDelete) {
-          console.log(
-            `Deleting file from ${item.storageType}:`,
-            fileIdToDelete,
-          );
           await storage.delete(
             fileIdToDelete,
             item.googleAccountId || undefined,
@@ -83,10 +82,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, count: mediaItems.length });
-  } catch (error: any) {
-    console.error("Multiple delete error:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Multiple delete error:", err);
     return NextResponse.json(
-      { error: error?.message || "Failed to process multiple delete" },
+      { error: err.message || "Failed to process multiple delete" },
       { status: 500 },
     );
   }

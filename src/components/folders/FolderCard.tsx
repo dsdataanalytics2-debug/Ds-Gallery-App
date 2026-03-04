@@ -5,7 +5,6 @@ import {
   Folder as FolderIcon,
   MoreHorizontal,
   Trash2,
-  Settings,
   Loader2,
 } from "lucide-react";
 import { Folder as FolderType } from "@/types";

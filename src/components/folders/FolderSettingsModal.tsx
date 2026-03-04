@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Settings,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Folder } from "@/types";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useToast } from "@/context/ToastContext";
 
 interface User {
   id: string;
@@ -43,6 +44,7 @@ export default function FolderSettingsModal({
   folder,
   onUpdate,
 }: FolderSettingsModalProps) {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"sharing" | "transfer">("sharing");
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<FolderPermission[]>([]);
@@ -81,7 +83,7 @@ export default function FolderSettingsModal({
     }
   }, [isOpen, folder.id]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -99,9 +101,9 @@ export default function FolderSettingsModal({
     } catch (err) {
       console.error("Failed to fetch users", err);
     }
-  };
+  }, []);
 
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -120,7 +122,7 @@ export default function FolderSettingsModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [folder.id]);
 
   const handleShare = async (userId: string) => {
     try {
@@ -135,6 +137,7 @@ export default function FolderSettingsModal({
         body: JSON.stringify({ userId }),
       });
       if (res.ok) {
+        showToast("Access granted successfully", "success");
         fetchPermissions();
       }
     } catch (err) {
@@ -156,6 +159,7 @@ export default function FolderSettingsModal({
         },
       );
       if (res.ok) {
+        showToast("Access revoked successfully", "info");
         fetchPermissions();
       }
     } catch (err) {
@@ -191,12 +195,12 @@ export default function FolderSettingsModal({
         body: JSON.stringify({ newOwnerId }),
       });
       if (res.ok) {
-        alert("Ownership transferred successfully.");
+        showToast("Ownership transferred successfully", "success");
         onClose();
         if (onUpdate) onUpdate();
       } else {
         const data = await res.json();
-        alert(`Transfer failed: ${data.error}`);
+        showToast(`Transfer failed: ${data.error}`, "error");
       }
     } catch (err) {
       console.error("Failed to transfer", err);
@@ -232,11 +236,12 @@ export default function FolderSettingsModal({
       });
 
       if (res.ok) {
+        showToast("Collection deleted successfully", "success");
         onClose();
         if (onUpdate) onUpdate();
       } else {
         const errorData = await res.json();
-        alert(`Failed to delete collection: ${errorData.error}`);
+        showToast(`Failed to delete collection: ${errorData.error}`, "error");
       }
     } catch (error) {
       console.error("Error deleting folder:", error);
@@ -472,42 +477,40 @@ export default function FolderSettingsModal({
                   className="w-full bg-slate-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all"
                 />
 
-                {searchQuery && (
-                  <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
-                    {filteredUsers.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-500">
-                        No matching users
-                      </div>
-                    ) : (
-                      filteredUsers.map((user) => (
-                        <button
-                          key={user.id}
-                          onClick={() => handleTransfer(user.id)}
-                          className="w-full flex items-center justify-between p-3 bg-slate-900/50 hover:bg-rose-500/5 transition-colors group"
-                        >
-                          <div className="flex items-center gap-3 text-left">
-                            <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 font-bold text-xs group-hover:text-rose-400">
-                              {(user.name || user.email)
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-white group-hover:text-rose-400 transition-colors uppercase tracking-tight">
-                                {user.name || "Unnamed User"}
-                              </p>
-                              <p className="text-[10px] text-slate-500 font-medium">
-                                {user.email}
-                              </p>
-                            </div>
+                <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
+                  {filteredUsers.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-500">
+                      {searchQuery
+                        ? "No matching users"
+                        : "No other users available"}
+                    </div>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => handleTransfer(user.id)}
+                        className="w-full flex items-center justify-between p-3 bg-slate-900/50 hover:bg-rose-500/5 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 font-bold text-xs group-hover:text-rose-400">
+                            {(user.name || user.email).charAt(0).toUpperCase()}
                           </div>
-                          <div className="px-3 py-1.5 bg-white/5 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 transition-all">
-                            <ArrowRightLeft className="h-3 w-3" />
+                          <div>
+                            <p className="text-xs font-bold text-white group-hover:text-rose-400 transition-colors uppercase tracking-tight">
+                              {user.name || "Unnamed User"}
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                              {user.email}
+                            </p>
                           </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
+                        </div>
+                        <div className="px-3 py-1.5 bg-white/5 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 transition-all">
+                          <ArrowRightLeft className="h-3 w-3" />
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}

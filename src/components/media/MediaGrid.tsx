@@ -240,7 +240,7 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
                       item.storageType === "gdrive" ||
                       item.storageType === "google-drive" ||
                       (item.cdnUrl && item.cdnUrl.includes("drive.google.com"))
-                        ? `/api/media/${item.id}/proxy?token=${localStorage.getItem("token")}`
+                        ? `/api/media/${item.id}/proxy?type=thumbnail&token=${localStorage.getItem("token")}`
                         : item.thumbnailUrl || item.cdnUrl
                     }
                     alt={item.fileName}
@@ -266,7 +266,9 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
                         className="w-full h-full object-cover animate-in fade-in duration-500"
                       />
                     ) : item.storageType === "gdrive" ||
-                      item.storageType === "google-drive" ? (
+                      item.storageType === "google-drive" ||
+                      (item.cdnUrl &&
+                        item.cdnUrl.includes("drive.google.com")) ? (
                       <img
                         src={`/api/media/${item.id}/proxy?type=thumbnail&token=${localStorage.getItem("token")}`}
                         alt={item.fileName}
@@ -479,6 +481,11 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
                 selectedVideo.storageType === "google-drive"
                   ? `/api/media/${selectedVideo.id}/proxy?token=${localStorage.getItem("token")}`
                   : selectedVideo.cdnUrl
+              }
+              poster={
+                selectedVideo.thumbnailUrl
+                  ? selectedVideo.thumbnailUrl.replace("=s220", "=s2048")
+                  : undefined
               }
               controls
               autoPlay

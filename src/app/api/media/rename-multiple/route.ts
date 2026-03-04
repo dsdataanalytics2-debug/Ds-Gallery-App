@@ -40,14 +40,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No media found" }, { status: 404 });
     }
 
-    console.log(
-      `Starting sequential bulk rename for ${mediaItems.length} items with base: "${baseName}"`,
-    );
-
     // Permission check
-    const folderIds = Array.from(new Set(mediaItems.map((m) => m.folderId)));
+    const folderIds = Array.from(
+      new Set(mediaItems.map((m) => m.folderId).filter(Boolean)),
+    );
+    const isAdmin =
+      sessionUser.role === "ADMIN" || sessionUser.role === "admin";
+
     for (const folderId of folderIds) {
-      const allowed = await hasFolderAccess(sessionUser.id, folderId);
+      const allowed =
+        isAdmin || (await hasFolderAccess(sessionUser.id, folderId as string));
       if (!allowed) {
         return NextResponse.json(
           { error: `Access denied to folder: ${folderId}` },
@@ -61,11 +63,15 @@ export async function POST(request: NextRequest) {
       const item = mediaItems[i];
       const index = i + 1;
 
-      console.log(`Processing rename for item: ${item.id} (${item.fileName})`);
-      const storage = await getStorageProvider((item as any).storageType);
+      const m = item as {
+        storageType: string;
+        storageFileId?: string | null;
+        storagePath?: string | null;
+        googleAccountId?: string | null;
+      };
+      const storage = await getStorageProvider(m.storageType);
 
-      const storageId =
-        (item as any).storageFileId || (item as any).storagePath;
+      const storageId = m.storageFileId || m.storagePath;
       if (!storageId) {
         throw new Error(`Media item ${item.id} has no valid storage ID`);
       }
@@ -76,13 +82,12 @@ export async function POST(request: NextRequest) {
         : "";
 
       const newFileName = `${baseName}_${index}${extension}`;
-      console.log(`Renaming in storage: ${storageId} -> ${newFileName}`);
 
       // Rename in storage and get new mapping
       const result = await storage.rename(
         storageId,
         newFileName,
-        (item as any).googleAccountId || undefined,
+        m.googleAccountId || undefined,
       );
 
       // Update in DB
@@ -93,7 +98,7 @@ export async function POST(request: NextRequest) {
             fileName: newFileName,
             storageFileId: result.fileId,
             cdnUrl: result.url || item.cdnUrl,
-          } as any,
+          },
         });
 
         if (sessionUser) {
@@ -105,17 +110,19 @@ export async function POST(request: NextRequest) {
             mediaName: updated.fileName,
             fileType: updated.fileType,
             folderId: item.folderId,
-            folderName: (item as any).folder?.name || "Unknown",
+            folderName:
+              (item as { folder?: { name: string } }).folder?.name || "Unknown",
           });
         }
 
         renamed.push(updated);
-      } catch (prismaError: any) {
+      } catch (prismaError: unknown) {
+        const pErr = prismaError as Error;
         console.error(
           `Prisma update FAILED for item ${item.id}:`,
-          prismaError.message,
+          pErr.message,
         );
-        throw prismaError;
+        throw pErr;
       }
     }
 
@@ -124,10 +131,11 @@ export async function POST(request: NextRequest) {
       count: renamed.length,
       media: renamed,
     });
-  } catch (error: any) {
-    console.error("Multiple rename error:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Multiple rename error:", err);
     return NextResponse.json(
-      { error: error?.message || "Failed to process multiple rename" },
+      { error: err.message || "Failed to process multiple rename" },
       { status: 500 },
     );
   }

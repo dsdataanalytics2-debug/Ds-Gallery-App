@@ -97,7 +97,11 @@ export async function PUT(
     if (isPublic !== undefined) {
       try {
         await prisma.$executeRaw`UPDATE "Folder" SET "isPublic" = ${!!isPublic} WHERE id = ${id}`;
-        (updatedFolder as any).isPublic = !!isPublic;
+        (
+          updatedFolder as Prisma.FolderGetPayload<object> & {
+            isPublic: boolean;
+          }
+        ).isPublic = !!isPublic;
       } catch (sqlError) {
         console.error("SQL Update Fallback Error:", sqlError);
       }

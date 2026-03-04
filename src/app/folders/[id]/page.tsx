@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Upload,
-  Grid,
-  List as ListIcon,
   Trash2,
   Loader2,
   Search,
@@ -16,6 +14,8 @@ import {
   Users,
   Shield,
   Mail,
+  LayoutGrid,
+  List as ListIcon,
 } from "lucide-react";
 import { Folder } from "@/types";
 import MediaGrid from "@/components/media/MediaGrid";
@@ -25,7 +25,6 @@ import FolderCard from "@/components/folders/FolderCard";
 import CreateFolderModal from "@/components/folders/CreateFolderModal";
 import FolderSettingsModal from "@/components/folders/FolderSettingsModal";
 import ConfirmModal from "@/components/ui/ConfirmModal";
-import { Sparkles, LayoutGrid } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import { Media } from "@/types";
 
@@ -54,7 +53,7 @@ export default function FolderPage({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchFolder = async () => {
+  const fetchFolder = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/folders/${id}`, {
@@ -72,9 +71,9 @@ export default function FolderPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchMedia = async () => {
+  const fetchMedia = useCallback(async () => {
     setMediaLoading(true);
     try {
       const queryParams = new URLSearchParams({
@@ -102,7 +101,7 @@ export default function FolderPage({
     } finally {
       setMediaLoading(false);
     }
-  };
+  }, [id, page, pageSize, searchQuery]);
 
   useEffect(() => {
     fetchFolder();

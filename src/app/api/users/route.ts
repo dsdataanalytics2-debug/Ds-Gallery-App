@@ -9,10 +9,10 @@ import {
 export async function GET(request: Request) {
   if (!verifyAuth(request)) return unauthorizedResponse();
 
-  // In a real app, verifyRole(request, 'admin') would be here
-  // For demo, we'll check a custom header passed by the frontend
-  const userRole = request.headers.get("x-user-role");
-  if (userRole !== "admin") return forbiddenResponse();
+  // Allow any authenticated user to see the user list (e.g., for sharing/transfer)
+  // But we could restrict certain fields if wanted.
+  // const userRole = request.headers.get("x-user-role");
+  // if (userRole !== "admin") return forbiddenResponse();
 
   try {
     const users = await prisma.user.findMany({

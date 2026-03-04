@@ -29,7 +29,10 @@ export async function GET(
     if (!sessionUser) return unauthorizedResponse();
 
     // Check permission
-    const allowed = await hasFolderAccess(sessionUser.id, media.folderId);
+    const isAdmin =
+      sessionUser.role === "ADMIN" || sessionUser.role === "admin";
+    const allowed =
+      isAdmin || (await hasFolderAccess(sessionUser.id, media.folderId));
     if (!allowed) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }

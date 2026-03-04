@@ -7,8 +7,6 @@ import {
   getAuthenticatedUser,
 } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
-import fs from "fs";
-import path from "path";
 
 export async function GET(request: Request) {
   if (!verifyAuth(request)) return unauthorizedResponse(request);
@@ -63,13 +61,14 @@ export async function GET(request: Request) {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
-    console.error("Error fetching media:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Error fetching media:", err);
     return NextResponse.json(
       {
         error: "Failed to fetch media",
-        details: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        details: err.message,
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
       },
       { status: 500 },
     );
@@ -119,14 +118,9 @@ export async function POST(request: Request) {
         thumbnailUrl: body.thumbnailUrl || null,
         isCustomThumbnail: body.isCustomThumbnail || false,
         tags: body.tags || [],
-        metadata: body.metadata || {},
+        metadata: (body.metadata || {}) as any,
         googleAccountId: body.googleAccountId || null,
       };
-
-      console.log(
-        "Attempting to create media with data:",
-        JSON.stringify(createData, null, 2),
-      );
 
       const media = await prisma.media.create({
         data: createData,
@@ -147,30 +141,37 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json(media);
-    } catch (prismaError: any) {
+    } catch (prismaError: unknown) {
+      const pErr = prismaError as {
+        message: string;
+        code?: string;
+        meta?: unknown;
+        stack?: string;
+      };
       console.error("Prisma Create Error Detail:", {
-        message: prismaError.message,
-        code: prismaError.code,
-        meta: prismaError.meta,
-        stack: prismaError.stack,
+        message: pErr.message,
+        code: pErr.code,
+        meta: pErr.meta,
+        stack: pErr.stack,
       });
       return NextResponse.json(
         {
           error: "Failed to create media entry in database",
-          details: prismaError.message,
-          code: prismaError.code,
-          meta: prismaError.meta,
+          details: pErr.message,
+          code: pErr.code,
+          meta: pErr.meta,
         },
         { status: 500 },
       );
     }
-  } catch (error: any) {
-    console.error("CRITICAL Error creating media entry:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("CRITICAL Error creating media entry:", err);
     return NextResponse.json(
       {
         error: "Failed to create media",
-        details: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        details: err.message,
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
       },
       { status: 500 },
     );
