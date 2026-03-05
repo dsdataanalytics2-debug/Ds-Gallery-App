@@ -1,6 +1,10 @@
 import { Readable } from "stream";
 import { StorageProvider, StorageResult } from "./index";
-import { getGoogleDriveClient, ensureRootFolder } from "@/lib/gdrive-client";
+import {
+  getGoogleDriveClient,
+  ensureRootFolder,
+  clearDriveClientCache,
+} from "@/lib/gdrive-client";
 import prisma from "@/lib/prisma";
 import { drive_v3 } from "googleapis";
 
@@ -135,8 +139,17 @@ export class GoogleDriveStorageProvider implements StorageProvider {
         storageType: "gdrive",
         googleAccountId: accountId, // Explicitly return the account used
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("GDrive upload error:", error);
+
+      if (error.message?.includes("invalid_grant")) {
+        clearDriveClientCache(accountId);
+        console.log(
+          `[Storage] Cleared GDrive cache for ${accountId} due to invalid_grant`,
+        );
+        throw new Error("AUTH_ERROR_GDRIVE_REAUTH");
+      }
+
       throw new Error(
         `GDrive upload failed: ${error instanceof Error ? error.message : "Unknown"}`,
       );
@@ -147,12 +160,20 @@ export class GoogleDriveStorageProvider implements StorageProvider {
     if (!accountId) {
       throw new Error("GDrive download: googleAccountId is mandatory.");
     }
-    const drive = await getGoogleDriveClient(accountId);
-    const response = await drive.files.get(
-      { fileId, alt: "media" },
-      { responseType: "arraybuffer" },
-    );
-    return Buffer.from(response.data as ArrayBuffer);
+    try {
+      const drive = await getGoogleDriveClient(accountId);
+      const response = await drive.files.get(
+        { fileId, alt: "media" },
+        { responseType: "arraybuffer" },
+      );
+      return Buffer.from(response.data as ArrayBuffer);
+    } catch (error: any) {
+      if (error.message?.includes("invalid_grant")) {
+        clearDriveClientCache(accountId);
+        throw new Error("AUTH_ERROR_GDRIVE_REAUTH");
+      }
+      throw error;
+    }
   }
 
   async delete(fileId: string, accountId: string): Promise<void> {

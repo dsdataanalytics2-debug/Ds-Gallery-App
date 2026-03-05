@@ -1,0 +1,608 @@
+
+[2026-03-05T04:08:28.026Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:08:29.098Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:08:32.960Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:10:24.365Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:10:26.638Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:10:28.514Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:10:35.654Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:10:38.068Z] Proxy Request: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range Header (In): bytes=0-
+- Drive Status: 206
+- Content-Type (Out): video/mp4
+- Content-Length (Out): none
+- Content-Range (Out): none
+------------------------------------------------
+
+[2026-03-05T04:17:43.784Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:17:45.987Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:17:47.565Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:17:49.529Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=327680-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80017001
+- Content-Range: bytes 327680-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:18:03.796Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=18022400-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 62322281
+- Content-Range: bytes 18022400-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:18:11.224Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=31719424-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 48625257
+- Content-Range: bytes 31719424-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:18:23.735Z] fetch-proxy: 5820f7e0-dee7-4c87-ac45-20438996a6e8
+- Range: none
+- Drive Status: 200
+- Content-Type: image/jpeg
+- Content-Length: 44682
+- Content-Range: none
+------------------------------------------------
+
+[2026-03-05T04:19:57.467Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:19:58.505Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:19:58.661Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:20:00.174Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:20:01.901Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=327680-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80017001
+- Content-Range: bytes 327680-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:20:11.746Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=163840-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80180841
+- Content-Range: bytes 163840-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:20:46.115Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:20:47.495Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:20:51.464Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=327680-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80017001
+- Content-Range: bytes 327680-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:24:49.318Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:24:50.451Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:24:50.710Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:24:52.680Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:24:54.345Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=327680-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80017001
+- Content-Range: bytes 327680-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:25:14.892Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:25:15.119Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:25:15.936Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:25:16.806Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80344681
+- Content-Range: bytes 0-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:25:18.560Z] fetch-proxy: c3192bec-e3d6-42a9-b96b-f5082bdee5ac
+- Range: bytes=327680-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 80017001
+- Content-Range: bytes 327680-80344680/80344681
+------------------------------------------------
+
+[2026-03-05T04:27:18.837Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:27:19.961Z] fetch-proxy: 8b56278f-b324-4303-8bde-baa695e69430
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 4813096
+- Content-Range: bytes 0-4813095/4813096
+------------------------------------------------
+
+[2026-03-05T04:27:49.182Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T04:27:50.434Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=720896-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172597552
+- Content-Range: bytes 720896-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T04:27:52.282Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T04:48:06.502Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T04:48:07.402Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T04:48:09.942Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=720896-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172597552
+- Content-Range: bytes 720896-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T04:48:33.543Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:07:49.303Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:07:51.502Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:23:48.140Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:23:52.229Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:23:53.569Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:23:54.705Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:23:55.798Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=720896-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172597552
+- Content-Range: bytes 720896-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:24:05.497Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=55017472-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 118300976
+- Content-Range: bytes 55017472-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:24:07.019Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=40468480-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 132849968
+- Content-Range: bytes 40468480-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:24:18.118Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:24:20.687Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:24:29.124Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:24:30.115Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=360448-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172958000
+- Content-Range: bytes 360448-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:24:31.641Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=5210112-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 168108336
+- Content-Range: bytes 5210112-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:26:24.565Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:26:25.430Z] fetch-proxy: e29cffda-4463-4e59-9a36-f7d370c8d1ee
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 13339497
+- Content-Range: bytes 0-13339496/13339497
+------------------------------------------------
+
+[2026-03-05T06:26:30.874Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=720896-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172597552
+- Content-Range: bytes 720896-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:26:36.544Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:26:40.092Z] fetch-proxy: e29cffda-4463-4e59-9a36-f7d370c8d1ee
+- Range: bytes=4882432-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 8457065
+- Content-Range: bytes 4882432-13339496/13339497
+------------------------------------------------
+
+[2026-03-05T06:26:50.712Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:26:51.684Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=360448-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172958000
+- Content-Range: bytes 360448-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:26:52.902Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=5275648-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 168042800
+- Content-Range: bytes 5275648-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:27:16.939Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:27:18.622Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=6455296-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 166863152
+- Content-Range: bytes 6455296-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:33:03.548Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:33:04.544Z] fetch-proxy: e29cffda-4463-4e59-9a36-f7d370c8d1ee
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 13339497
+- Content-Range: bytes 0-13339496/13339497
+------------------------------------------------
+
+[2026-03-05T06:33:06.639Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=720896-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172597552
+- Content-Range: bytes 720896-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:33:22.176Z] fetch-proxy: e29cffda-4463-4e59-9a36-f7d370c8d1ee
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 13339497
+- Content-Range: bytes 0-13339496/13339497
+------------------------------------------------
+
+[2026-03-05T06:33:22.213Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:33:51.232Z] fetch-proxy: 626f5481-a9bc-48c6-8376-97fa00a18e02
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 1462037
+- Content-Range: bytes 0-1462036/1462037
+------------------------------------------------
+
+[2026-03-05T06:33:53.016Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=0-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 173318448
+- Content-Range: bytes 0-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:33:54.167Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=720896-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172597552
+- Content-Range: bytes 720896-173318447/173318448
+------------------------------------------------
+
+[2026-03-05T06:33:58.948Z] fetch-proxy: 4134e074-3979-4efb-b65a-c4dd795d4214
+- Range: bytes=360448-
+- Drive Status: 206
+- Content-Type: video/mp4
+- Content-Length: 172958000
+- Content-Range: bytes 360448-173318447/173318448
+------------------------------------------------

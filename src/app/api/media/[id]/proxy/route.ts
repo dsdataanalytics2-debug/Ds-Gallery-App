@@ -2,7 +2,35 @@ import prisma from "@/lib/prisma";
 import { verifyAuth, unauthorizedResponse } from "@/lib/auth";
 import { getGoogleDriveClient } from "@/lib/gdrive-client";
 import { Readable } from "stream";
-import { NextResponse } from "next/server";
+import { Media } from "@/types";
+
+/**
+ * Safely converts a Node.js Readable stream to a Web ReadableStream.
+ * Uses async iteration for robustness and better backpressure handling.
+ */
+function safeNodeToWebStream(nodeStream: Readable): ReadableStream {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of nodeStream) {
+          controller.enqueue(new Uint8Array(chunk));
+        }
+        controller.close();
+      } catch (err: any) {
+        // If the stream was destroyed/aborted, the loop will throw.
+        // We only call error() if the controller is still "open".
+        try {
+          controller.error(err);
+        } catch {
+          /* already closed */
+        }
+      }
+    },
+    cancel() {
+      nodeStream.destroy();
+    },
+  });
+}
 
 export async function GET(
   request: Request,
@@ -12,11 +40,12 @@ export async function GET(
     return unauthorizedResponse();
   }
 
+  let media: Media | null = null;
   try {
     const { id } = await params;
-    const media = await prisma.media.findUnique({
+    media = (await prisma.media.findUnique({
       where: { id },
-    });
+    })) as any;
 
     if (!media) {
       return new Response("Media not found", { status: 404 });
@@ -33,11 +62,7 @@ export async function GET(
     const isThumbnail = searchParams.get("type") === "thumbnail";
 
     // Prioritize storageFileId, fallback to publicId for legacy compatibility
-    const mediaAny2 = media as {
-      storageFileId?: string;
-      publicId?: string;
-      googleAccountId?: string | null;
-    };
+    const mediaAny2 = media as Media;
     const fileId = mediaAny2.storageFileId || mediaAny2.publicId;
 
     if (!fileId) {
@@ -74,38 +99,9 @@ export async function GET(
           headers.set("Content-Type", "image/jpeg");
           headers.set("Cache-Control", "public, max-age=3600");
 
-          // Convert Node.js Readable to Web ReadableStream (DRY - used below too)
-          const nodeStream = thumbResponse.data as Readable;
-          const webStream = new ReadableStream({
-            start(controller) {
-              nodeStream.on("data", (chunk: Buffer | Uint8Array) => {
-                try {
-                  controller.enqueue(new Uint8Array(chunk));
-                } catch {
-                  // Ignore enqueue errors
-                }
-              });
-              nodeStream.on("end", () => {
-                try {
-                  controller.close();
-                } catch {
-                  // Ignore close errors
-                }
-              });
-              nodeStream.on("error", (err: Error) => {
-                try {
-                  controller.error(err);
-                } catch {
-                  // Ignore error signaling errors
-                }
-              });
-            },
-            cancel() {
-              nodeStream.destroy();
-            },
-          });
+          const webStream = safeNodeToWebStream(thumbResponse.data as Readable);
 
-          return new Response(webStream as unknown as BodyInit, {
+          return new Response(webStream as BodyInit, {
             status: 200,
             headers,
           });
@@ -141,75 +137,150 @@ export async function GET(
       }
     }
 
-    // Handle Range requests for seeking
-    const rangeHeader = request.headers.get("range");
-    const driveRequestOptions = {
-      fileId: fileId,
-      alt: "media",
-      supportsAllDrives: true,
-    };
+    // --- VIDEO/FILE STREAMING ---
+    // Use native fetch with OAuth2 access token rather than googleapis stream.
+    // The googleapis stream API strips Range response headers (Content-Range,
+    // Content-Length) — these are REQUIRED for video seeking. Direct fetch works.
 
-    const driveRequestHeaders: Record<string, string> = {};
-    if (rangeHeader && !isThumbnail) {
-      driveRequestHeaders.Range = rangeHeader;
+    const rangeHeader = request.headers.get("range");
+
+    // Get a fresh OAuth2 access token from the Drive client
+    const auth = (drive as any).context._options.auth;
+    const tokenResponse = await auth.getAccessToken();
+    const accessToken = tokenResponse?.token;
+
+    if (!accessToken) {
+      return new Response("Failed to acquire access token", { status: 502 });
     }
 
-    const response = await drive.files.get(driveRequestOptions, {
-      responseType: "stream",
-      headers: driveRequestHeaders,
+    // Build the direct Drive download URL
+    const driveDirectUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`;
+
+    // Forward the incoming Range header to Google Drive
+    const fetchHeaders: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (rangeHeader) fetchHeaders["Range"] = rangeHeader;
+
+    const driveResponse = await fetch(driveDirectUrl, {
+      headers: fetchHeaders,
     });
 
-    // Get headers from Google Drive response
-    const headers = new Headers();
-    const contentType = response.headers["content-type"];
-    const contentLength = response.headers["content-length"];
-    const contentRange = response.headers["content-range"];
+    if (!driveResponse.ok && driveResponse.status !== 206) {
+      console.error(`[Proxy] Drive fetch failed: ${driveResponse.status}`);
+      return new Response(`Drive error: ${driveResponse.statusText}`, {
+        status: driveResponse.status,
+      });
+    }
 
-    if (contentType) headers.set("Content-Type", contentType);
-    if (contentLength) headers.set("Content-Length", contentLength);
-    if (contentRange) headers.set("Content-Range", contentRange);
+    // Build response headers — forward all important ones from Drive
+    const responseHeaders = new Headers();
+    const contentType =
+      driveResponse.headers.get("content-type") || "video/mp4";
+    responseHeaders.set("Content-Type", contentType);
+    responseHeaders.set("Accept-Ranges", "bytes");
 
-    // Enable range requests for seeking
-    headers.set("Accept-Ranges", "bytes");
+    const driveContentLength = driveResponse.headers.get("content-length");
+    const driveContentRange = driveResponse.headers.get("content-range");
 
-    // Convert Node.js Readable to Web ReadableStream
-    const nodeStream = response.data as Readable;
-    const webStream = new ReadableStream({
-      start(controller) {
-        nodeStream.on("data", (chunk: Buffer | Uint8Array) => {
-          try {
-            controller.enqueue(new Uint8Array(chunk));
-          } catch {
-            // Ignore enqueue errors
-          }
-        });
-        nodeStream.on("end", () => {
-          try {
-            controller.close();
-          } catch {
-            // Ignore close errors
-          }
-        });
-        nodeStream.on("error", (err: Error) => {
-          try {
-            controller.error(err);
-          } catch {
-            // Ignore error signaling errors
-          }
-        });
-      },
-      cancel() {
-        nodeStream.destroy();
-      },
-    });
+    if (driveContentLength)
+      responseHeaders.set("Content-Length", driveContentLength);
+    if (driveContentRange)
+      responseHeaders.set("Content-Range", driveContentRange);
 
-    return new Response(webStream as unknown as BodyInit, {
-      status: rangeHeader && contentRange ? 206 : 200,
-      headers,
+    // If Drive returns 206 but no Content-Range, construct it using DB fileSize
+    if (rangeHeader && !driveContentRange && media.fileSize) {
+      const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d+)?/);
+      if (rangeMatch) {
+        const start = parseInt(rangeMatch[1], 10);
+        const end = rangeMatch[2]
+          ? parseInt(rangeMatch[2], 10)
+          : Number(media.fileSize) - 1;
+        const total = Number(media.fileSize);
+        responseHeaders.set("Content-Range", `bytes ${start}-${end}/${total}`);
+        if (!driveContentLength) {
+          responseHeaders.set("Content-Length", (end - start + 1).toString());
+        }
+      }
+    }
+
+    responseHeaders.set(
+      "Access-Control-Expose-Headers",
+      "Content-Range, Content-Length, Accept-Ranges",
+    );
+
+    // Diagnostic logging
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const logPath = path.join(process.cwd(), "proxy-diagnostics.log");
+        fs.appendFileSync(
+          logPath,
+          `\n[${new Date().toISOString()}] fetch-proxy: ${id}
+- Range: ${rangeHeader || "none"}
+- Drive Status: ${driveResponse.status}
+- Content-Type: ${contentType}
+- Content-Length: ${responseHeaders.get("Content-Length") || "none"}
+- Content-Range: ${responseHeaders.get("Content-Range") || "none"}
+------------------------------------------------\n`,
+        );
+      } catch {
+        /* Ignore */
+      }
+    }
+
+    return new Response(driveResponse.body, {
+      status: driveResponse.status,
+      headers: responseHeaders,
     });
   } catch (error: unknown) {
     const err = error as Error;
     console.error("Proxy Error:", err);
+
+    // Detailed error logging
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const logPath = path.join(process.cwd(), "proxy-error.log");
+        fs.appendFileSync(
+          logPath,
+          `\n[${new Date().toISOString()}] Proxy Exception: ${err.message}\n${err.stack}\n`,
+        );
+      } catch (logErr) {
+        // Ignore
+      }
+    }
+
+    // Automatic cache clearing for invalid_grant
+    if (err.message === "invalid_grant" && media?.googleAccountId) {
+      try {
+        const {
+          clearDriveClientCache,
+        } = require("../../../../../lib/gdrive-client");
+        clearDriveClientCache(media.googleAccountId);
+        console.log(
+          `[Proxy] Cleared GDrive cache for account ${media.googleAccountId} due to invalid_grant`,
+        );
+      } catch (cacheErr) {
+        // Ignore errors during cache clearing
+      }
+    }
+
+    // Emergency file logging for debugging
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const logPath = path.join(process.cwd(), "proxy-error.log");
+      fs.appendFileSync(
+        logPath,
+        `\n[${new Date().toISOString()}] Proxy Error: ${err.message}\n${err.stack}\n`,
+      );
+    } catch (logErr) {
+      console.error("Failed to write proxy-error.log:", logErr);
+    }
+
     return new Response(err.message || "Proxy failed", { status: 500 });
   }
 }

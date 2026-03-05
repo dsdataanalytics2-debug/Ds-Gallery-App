@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 import { hasFolderAccess } from "@/lib/permission";
 import { getStorageProvider } from "@/lib/storage";
+import { logActivity } from "@/lib/audit";
 
 export async function GET(
   request: Request,
@@ -148,9 +149,16 @@ export async function DELETE(
     // For simplicity, we'll fetch all media in this folder, and then recursively for children.
 
     const cleanupFolderStorage = async (folderId: string) => {
-      // Get media in this folder
+      // Get media in this folder — include googleAccountId for GDrive cleanup
       const mediaItems = await prisma.media.findMany({
         where: { folderId },
+        select: {
+          id: true,
+          storageType: true,
+          storageFileId: true,
+          storagePath: true,
+          googleAccountId: true,
+        },
       });
 
       for (const item of mediaItems) {
@@ -158,14 +166,19 @@ export async function DELETE(
           const storageProvider = await getStorageProvider(item.storageType);
           const fileIdToDelete = item.storageFileId || item.storagePath;
           if (fileIdToDelete) {
-            await storageProvider.delete(fileIdToDelete);
+            // Pass googleAccountId so GDrive provider can authenticate the delete
+            await storageProvider.delete(
+              fileIdToDelete,
+              item.googleAccountId || undefined,
+            );
           }
         } catch (err) {
           console.error(`Failed to delete storage for media ${item.id}:`, err);
+          // Continue with other files even if one fails
         }
       }
 
-      // Get subfolders
+      // Get subfolders and recurse
       const subfolders = await prisma.folder.findMany({
         where: { parentId: folderId },
       });
@@ -181,6 +194,17 @@ export async function DELETE(
     await prisma.folder.delete({
       where: { id },
     });
+
+    // 3. Log the deletion activity
+    if (sessionUser) {
+      await logActivity({
+        userId: sessionUser.id,
+        userName: sessionUser.name,
+        action: "DELETE_FOLDER",
+        folderId: id,
+        folderName: folder.name,
+      }).catch((err) => console.error("Failed to log folder deletion:", err));
+    }
 
     return NextResponse.json({
       message: "Folder and contents deleted successfully",

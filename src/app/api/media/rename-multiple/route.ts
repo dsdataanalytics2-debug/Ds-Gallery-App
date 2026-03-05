@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     const mediaItems = await prisma.media.findMany({
       where: { id: { in: mediaIds } },
       orderBy: { createdAt: "asc" }, // Deterministic order for numbering
+      include: { folder: true }, // Required for accurate audit log
     });
 
     if (mediaItems.length === 0) {
@@ -110,8 +111,7 @@ export async function POST(request: NextRequest) {
             mediaName: updated.fileName,
             fileType: updated.fileType,
             folderId: item.folderId,
-            folderName:
-              (item as { folder?: { name: string } }).folder?.name || "Unknown",
+            folderName: item.folder?.name || "Unknown",
           });
         }
 

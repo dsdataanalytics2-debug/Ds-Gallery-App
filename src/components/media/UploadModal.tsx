@@ -17,6 +17,7 @@ import {
   FileText,
   Play,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Folder } from "@/types";
@@ -71,6 +72,7 @@ export default function UploadModal({
   const [isGeneratingThumb, setIsGeneratingThumb] = useState<{
     [key: string]: boolean;
   }>({});
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -281,6 +283,7 @@ export default function UploadModal({
     setUploadProgress(0);
     setUploadSpeed(0);
     setEstimatedTime(null);
+    setAuthError(null);
 
     try {
       const uploadedFiles = [];
@@ -436,11 +439,18 @@ export default function UploadModal({
       setIsCustomThumb({});
     } catch (error) {
       console.error("DEBUG: Upload failed with full details:", error);
-      alert(
+      const msg =
         error instanceof Error
-          ? `${error.message}`
-          : "An unknown error occurred during upload",
-      );
+          ? error.message
+          : "An unknown error occurred during upload";
+
+      if (msg.includes("AUTH_ERROR_GDRIVE_REAUTH")) {
+        setAuthError(
+          "Google Drive session expired. Please re-authenticate to continue.",
+        );
+      } else {
+        alert(msg);
+      }
     } finally {
       setIsUploading(false);
       // Clean up object URLs on success
@@ -913,6 +923,26 @@ export default function UploadModal({
               </div>
             ) : (
               <div className="space-y-4">
+                {authError && (
+                  <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-3 animate-in fade-in slide-in-from-top-2">
+                    <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
+                      <ShieldCheck className="h-3 w-3" />
+                      Authentication Required
+                    </p>
+                    <p className="text-xs text-red-200/70 font-medium leading-relaxed">
+                      {authError}
+                    </p>
+                    <button
+                      onClick={() =>
+                        (window.location.href = "/api/google-auth/start")
+                      }
+                      className="w-full py-2 bg-red-500 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      Reconnect Now
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   <span>Targets</span>
                   <span>{selectedFolderIds.length} Selections</span>
@@ -980,6 +1010,7 @@ export default function UploadModal({
                   className="w-full h-full object-contain"
                   controls
                   autoPlay
+                  playsInline
                   onCanPlay={() => setIsPreviewLoading(false)}
                   onLoadedData={() => setIsPreviewLoading(false)}
                   onError={() => setIsPreviewLoading(false)}

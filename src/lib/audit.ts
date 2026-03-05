@@ -3,6 +3,7 @@ import prisma from "./prisma";
 export type AuditAction =
   | "UPLOAD"
   | "DELETE"
+  | "DELETE_FOLDER"
   | "DOWNLOAD"
   | "REPLACE"
   | "RENAME"

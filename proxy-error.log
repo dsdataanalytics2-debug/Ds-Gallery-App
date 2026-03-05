@@ -1,0 +1,100 @@
+
+[2026-03-05T06:31:51.765Z] Proxy Exception: fetch failed
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GET (D:\DS-Gallery-App\.next\dev\server\chunks\[root-of-the-server]__ef717f44._.js:563:31)
+    at async AppRouteRouteModule.do (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45156)
+    at async responseGenerator (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15350:38)
+    at async AppRouteRouteModule.handleResponse (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:191938)
+    at async handleResponse (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15413:32)
+    at async Module.handler (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15466:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1442:9)
+    at async DevServer.renderPageComponent (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1544:32)
+    at async DevServer.pipeImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\DS-Gallery-App\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:929:17)
+    at async D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (D:\DS-Gallery-App\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (D:\DS-Gallery-App\node_modules\next\dist\server\lib\start-server.js:226:13)
+
+[2026-03-05T06:31:51.767Z] Proxy Error: fetch failed
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GET (D:\DS-Gallery-App\.next\dev\server\chunks\[root-of-the-server]__ef717f44._.js:563:31)
+    at async AppRouteRouteModule.do (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45156)
+    at async responseGenerator (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15350:38)
+    at async AppRouteRouteModule.handleResponse (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:191938)
+    at async handleResponse (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15413:32)
+    at async Module.handler (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15466:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1442:9)
+    at async DevServer.renderPageComponent (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1544:32)
+    at async DevServer.pipeImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\DS-Gallery-App\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:929:17)
+    at async D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (D:\DS-Gallery-App\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (D:\DS-Gallery-App\node_modules\next\dist\server\lib\start-server.js:226:13)
+
+[2026-03-05T06:31:52.872Z] Proxy Exception: fetch failed
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GET (D:\DS-Gallery-App\.next\dev\server\chunks\[root-of-the-server]__ef717f44._.js:563:31)
+    at async AppRouteRouteModule.do (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45156)
+    at async responseGenerator (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15350:38)
+    at async AppRouteRouteModule.handleResponse (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:191938)
+    at async handleResponse (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15413:32)
+    at async Module.handler (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15466:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1442:9)
+    at async DevServer.renderPageComponent (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1544:32)
+    at async DevServer.pipeImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\DS-Gallery-App\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:929:17)
+    at async D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (D:\DS-Gallery-App\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (D:\DS-Gallery-App\node_modules\next\dist\server\lib\start-server.js:226:13)
+
+[2026-03-05T06:31:52.875Z] Proxy Error: fetch failed
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GET (D:\DS-Gallery-App\.next\dev\server\chunks\[root-of-the-server]__ef717f44._.js:563:31)
+    at async AppRouteRouteModule.do (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45156)
+    at async responseGenerator (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15350:38)
+    at async AppRouteRouteModule.handleResponse (D:\DS-Gallery-App\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:191938)
+    at async handleResponse (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15413:32)
+    at async Module.handler (D:\DS-Gallery-App\.next\dev\server\chunks\node_modules_next_c94f946c._.js:15466:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1442:9)
+    at async DevServer.renderPageComponent (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1544:32)
+    at async DevServer.pipeImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\DS-Gallery-App\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (D:\DS-Gallery-App\node_modules\next\dist\server\base-server.js:929:17)
+    at async D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (D:\DS-Gallery-App\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (D:\DS-Gallery-App\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (D:\DS-Gallery-App\node_modules\next\dist\server\lib\start-server.js:226:13)

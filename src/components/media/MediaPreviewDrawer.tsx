@@ -13,6 +13,7 @@ import {
   Volume2,
   VolumeX,
   Settings,
+  Loader2,
   Move,
   Edit,
   RefreshCcw,
@@ -53,6 +54,8 @@ export default function MediaPreviewDrawer({
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const [isOperationProcessing, setIsOperationProcessing] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -375,7 +378,7 @@ export default function MediaPreviewDrawer({
                   src={
                     media.storageType === "gdrive" ||
                     media.storageType === "google-drive"
-                      ? `/api/media/${media.id}/proxy?token=${localStorage.getItem("token")}`
+                      ? `/api/media/${media.id}/proxy?token=${encodeURIComponent(localStorage.getItem("token") || "")}`
                       : media.cdnUrl
                   }
                   poster={
@@ -383,11 +386,85 @@ export default function MediaPreviewDrawer({
                       ? media.thumbnailUrl.replace("=s220", "=s2048")
                       : undefined
                   }
+                  playsInline
                   className="w-full h-full object-contain"
                   onTimeUpdate={handleTimeUpdate}
-                  onLoadedMetadata={handleTimeUpdate}
+                  onLoadedMetadata={() => {
+                    handleTimeUpdate();
+                    setIsVideoLoading(false);
+                  }}
+                  onLoadStart={() => setIsVideoLoading(true)}
+                  onCanPlay={() => {
+                    setIsVideoLoading(false);
+                    setPlaybackError(null);
+                  }}
+                  onError={(e) => {
+                    const video = e.currentTarget;
+                    const error = video.error;
+
+                    console.error("Video element error reported:", {
+                      code: error?.code,
+                      message: error?.message,
+                      networkState: video.networkState,
+                      readyState: video.readyState,
+                      src: video.src,
+                    });
+
+                    // More human-readable explanation of error codes
+                    let errorDetails = "Unknown error";
+                    if (error) {
+                      switch (error.code) {
+                        case 1:
+                          errorDetails = "Playback aborted by user";
+                          break;
+                        case 2:
+                          errorDetails = "Network error while downloading";
+                          break;
+                        case 3:
+                          errorDetails = "Decoding error (unsupported format)";
+                          break;
+                        case 4:
+                          errorDetails = "Video source not supported or found";
+                          break;
+                      }
+                    }
+
+                    setIsVideoLoading(false);
+                    setPlaybackError(`Video Error: ${errorDetails}`);
+                  }}
                   onClick={handleTogglePlay}
                 />
+
+                {isVideoLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-30">
+                    <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
+                    <p className="text-white text-[10px] font-bold uppercase tracking-widest">
+                      Streaming Media...
+                    </p>
+                  </div>
+                )}
+
+                {playbackError && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 p-8 text-center">
+                    <div className="p-3 rounded-full bg-red-500/10 text-red-500 mb-4">
+                      <X className="h-8 w-8" />
+                    </div>
+                    <p className="text-white font-bold mb-2">{playbackError}</p>
+                    <p className="text-slate-400 text-xs mb-6 max-w-xs">
+                      The video stream was interrupted or is unavailable. Please
+                      try refreshing or reconnecting your Drive.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setPlaybackError(null);
+                        if (videoRef.current) videoRef.current.load();
+                      }}
+                      className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10"
+                    >
+                      Retry Playback
+                    </button>
+                  </div>
+                )}
 
                 {!media.isCustomThumbnail && (
                   <div className="absolute top-4 left-4 z-20">

@@ -36,8 +36,12 @@ export async function GET(request: Request) {
             id: string;
           }[];
         publicFolderIds = publicFolders.map((f) => f.id);
-      } catch (e) {
-        console.warn("Could not fetch public folders via raw SQL:", e);
+      } catch (e: unknown) {
+        const err = e as Error;
+        console.warn(
+          "Could not fetch public folders via raw SQL:",
+          err.message,
+        );
       }
 
       where.AND.push({
