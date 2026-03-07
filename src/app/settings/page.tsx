@@ -105,51 +105,51 @@ export default function SettingsPage() {
       )}
 
       {/* Header Section */}
-      <div className="flex flex-col gap-4 pt-4">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-400">
+      <div className="flex flex-col gap-3 md:gap-4 pt-4">
+        <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-indigo-400">
           <Settings className="h-3 w-3" />
           <span>System Architecture</span>
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-5xl font-bold tracking-tight text-white dark:text-white lg:text-white">
+        <div className="space-y-1 md:space-y-2">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white leading-tight">
             Global Settings
           </h1>
-          <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
+          <p className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
             Configure your development environment, storage gateways, and
             security protocols.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 pb-20">
         {/* Navigation */}
-        <nav className="lg:col-span-3 space-y-2">
+        <nav className="lg:col-span-3 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 custom-scrollbar shrink-0">
           {sections.map((section) => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={cn(
-                "w-full flex flex-col items-start gap-1 p-4 rounded-2xl transition-all border text-left group",
+                "min-w-[140px] lg:w-full flex flex-col items-start gap-1 p-3 md:p-4 rounded-2xl transition-all border text-left group",
                 activeSection === section.id
                   ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-400 shadow-lg shadow-indigo-500/5"
                   : "bg-transparent border-transparent text-slate-400 hover:bg-white/5 hover:text-white",
               )}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <section.icon
                   className={cn(
-                    "h-4 w-4",
+                    "h-4 w-4 shrink-0",
                     activeSection === section.id
                       ? "text-indigo-400"
                       : "text-slate-500 group-hover:text-white",
                   )}
                 />
-                <span className="text-sm font-bold uppercase tracking-wider">
+                <span className="text-[10px] md:text-sm font-bold uppercase tracking-wider whitespace-nowrap">
                   {section.label}
                 </span>
               </div>
-              <span className="text-[10px] font-medium leading-relaxed opacity-60 px-7">
+              <span className="hidden md:block text-[10px] font-medium leading-relaxed opacity-60 px-7">
                 {section.sub}
               </span>
             </button>
@@ -157,21 +157,21 @@ export default function SettingsPage() {
         </nav>
 
         {/* Content Area */}
-        <div className="lg:col-span-9 space-y-8">
+        <div className="lg:col-span-9 space-y-6 md:space-y-8">
           {activeSection === "storage" ? (
-            <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-              <div className="p-8 space-y-8">
-                <div className="flex items-center justify-between">
+            <div className="bg-card border border-border rounded-[2rem] md:rounded-[2.5rem] overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+              <div className="p-5 md:p-8 space-y-6 md:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
+                    <h3 className="text-base md:text-lg font-bold text-white tracking-tight">
                       Cloud Integration
                     </h3>
-                    <p className="text-xs text-slate-500 font-medium">
+                    <p className="text-[10px] md:text-xs text-slate-500 font-medium leading-relaxed">
                       Manage your media storage providers and distribution
                       network.
                     </p>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
+                  <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] md:text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5 shrink-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     GATEWAY ACTIVE
                   </span>

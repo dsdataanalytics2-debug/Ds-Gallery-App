@@ -199,9 +199,9 @@ export default function FolderPage({
   return (
     <div className="h-full flex flex-col gap-10 pb-20">
       {/* Dynamic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pt-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-4">
         <div className="space-y-4 flex-1">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href={
                 folder.parentId ? `/folders/${folder.parentId}` : "/folders"
@@ -211,56 +211,34 @@ export default function FolderPage({
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-              <Link
-                href="/"
-                className="hover:text-indigo-400 transition-colors"
-              >
-                Workspace
-              </Link>
-              <span className="text-slate-800">/</span>
-              {folder.parent && (
-                <>
-                  <Link
-                    href={`/folders/${folder.parentId}`}
-                    className="hover:text-indigo-400 transition-colors"
-                  >
-                    {folder.parent.name}
-                  </Link>
-                  <span className="text-slate-800">/</span>
-                </>
-              )}
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
               <span className="text-indigo-400">Collections</span>
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+              <h1 className="text-3xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">
                 {folder.name}
               </h1>
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-400 uppercase tracking-widest shrink-0">
                   <Shield className="h-3 w-3" />
-                  Owner: {folder.owner?.name || folder.owner?.email}
+                  Owner:{" "}
+                  {folder.owner?.name || folder.owner?.email?.split("@")[0]}
                 </div>
 
                 {folder.permissions && folder.permissions.length > 0 && (
-                  <div className="flex items-center gap-2 relative">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 ml-2">
-                      <Users className="h-3 w-3" />
-                      Shared With:
-                    </span>
+                  <div className="flex items-center gap-2 relative shrink-0">
                     <div className="relative">
                       <button
                         onClick={() => setShowAccessList(!showAccessList)}
                         className="flex items-center -space-x-2 group hover:opacity-80 transition-opacity"
                         title="Show Access List"
                       >
-                        {folder.permissions.map((p) => (
+                        {folder.permissions.slice(0, 3).map((p) => (
                           <div
                             key={p.id}
-                            title={`${p.user.name || p.user.email} (${p.user.role})`}
                             className="h-6 w-6 rounded-full bg-slate-800 border-2 border-background flex items-center justify-center text-[8px] font-bold text-indigo-400 group-hover:border-indigo-500/50 transition-colors"
                           >
                             {getInitials(p.user.name || p.user.email)}
@@ -313,58 +291,44 @@ export default function FolderPage({
                 )}
               </div>
             </div>
-            <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
+            <p className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
               {folder.description ||
                 "Comprehensive asset overview for this product collection."}
             </p>
           </div>
-
-          <div className="flex flex-wrap gap-2 pt-2">
-            {folder.productCategory && (
-              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest border border-indigo-500/20">
-                {folder.productCategory}
-              </span>
-            )}
-            {folder.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-widest border border-white/5"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
         </div>
 
-        <div className="flex items-center gap-4 shrink-0">
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5 transition-all active:scale-95"
-            title="Collection Settings"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setIsCreateFolderOpen(true)}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all border border-slate-700 active:scale-95"
-          >
-            <FolderPlus className="h-4 w-4" />
-            New Folder
-          </button>
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 shrink-0">
           <button
             onClick={() => setIsUploadOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+            className="col-span-2 sm:col-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
           >
             <Upload className="h-4 w-4" />
-            Import Assets
+            <span className="text-sm">Import Assets</span>
           </button>
+
           <button
-            onClick={handleDeleteFolder}
-            className="p-3.5 rounded-2xl bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 transition-all active:scale-95"
-            title="Delete Collection"
+            onClick={() => setIsCreateFolderOpen(true)}
+            className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-2xl font-bold transition-all border border-slate-700 active:scale-95 text-xs"
           >
-            <Trash2 className="h-5 w-5" />
+            <FolderPlus className="h-4 w-4" />
+            Folder
           </button>
+
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex-1 sm:flex-none p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5 transition-all"
+            >
+              <Settings className="h-5 w-5 mx-auto" />
+            </button>
+            <button
+              onClick={handleDeleteFolder}
+              className="flex-1 sm:flex-none p-3 rounded-2xl bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 transition-all"
+            >
+              <Trash2 className="h-5 w-5 mx-auto" />
+            </button>
+          </div>
         </div>
       </div>
 

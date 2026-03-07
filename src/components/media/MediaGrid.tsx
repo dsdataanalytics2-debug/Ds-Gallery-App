@@ -160,12 +160,12 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between bg-slate-900/40 border border-white/5 rounded-2xl p-4 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      <div className="mb-4 md:mb-6 flex items-center justify-between bg-slate-900/40 border border-white/5 rounded-2xl p-3 md:p-4 backdrop-blur-md">
+        <div className="flex items-center gap-2 md:gap-4">
           <button
             onClick={toggleSelectAll}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all",
+              "flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl text-[10px] md:text-sm font-bold uppercase tracking-widest transition-all",
               allSelected
                 ? "bg-indigo-500 text-white"
                 : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white",
@@ -173,23 +173,23 @@ export default function MediaGrid({ media, onItemClick }: MediaGridProps) {
           >
             {allSelected ? (
               <>
-                <CheckCircle2 className="h-4 w-4" />
-                Deselect All
+                <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
+                Deselect
               </>
             ) : (
               <>
-                <Circle className="h-4 w-4" />
+                <Circle className="h-3 w-3 md:h-4 md:w-4" />
                 Select All
               </>
             )}
           </button>
           {selectedIds.length > 0 && (
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] animate-pulse">
-              {selectedIds.length} Assets Selected
+            <span className="text-[9px] md:text-[10px] font-black text-indigo-400 uppercase tracking-widest animate-pulse whitespace-nowrap">
+              {selectedIds.length} Selected
             </span>
           )}
         </div>
-        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden sm:block">
+        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden lg:block">
           Grid View • {media.length} Items Total
         </div>
       </div>

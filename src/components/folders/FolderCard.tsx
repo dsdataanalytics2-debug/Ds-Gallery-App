@@ -63,7 +63,7 @@ export default function FolderCard({ folder, onUpdate }: FolderCardProps) {
     <Link href={`/folders/${folder.id}`}>
       <motion.div
         whileHover={{ y: -2 }}
-        className="group relative bg-card border border-border hover:border-indigo-500/50 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg max-w-[180px] w-full"
+        className="group relative bg-card border border-border hover:border-indigo-500/50 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg w-full"
       >
         {/* CRITICAL FIX #5 & #6: Cover Preview Area - 80px height (h-20) for ultra-compact design */}
         <div className="relative h-20 w-full overflow-hidden">

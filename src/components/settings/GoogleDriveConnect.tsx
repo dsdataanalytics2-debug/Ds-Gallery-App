@@ -268,7 +268,7 @@ export default function GoogleDriveConnect() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   className={cn(
-                    "relative group flex items-center gap-5 p-5 rounded-[1.75rem] border transition-all overflow-hidden backdrop-blur-md",
+                    "relative group flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 p-4 sm:p-5 rounded-[1.75rem] border transition-all overflow-hidden backdrop-blur-md",
                     account.isActive
                       ? "border-emerald-500/30 bg-emerald-500/10 shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)]"
                       : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]",
@@ -276,18 +276,28 @@ export default function GoogleDriveConnect() {
                 >
                   {/* Active Indicator Glow */}
                   {account.isActive && (
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[40px] rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[40px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10" />
                   )}
 
-                  <AccountAvatar account={account} size={48} />
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <AccountAvatar account={account} size={48} />
+                    <div className="sm:hidden flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">
+                        {account.displayName || "Drive Node"}
+                      </p>
+                      <p className="text-[10px] text-slate-500 truncate lowercase">
+                        {account.email}
+                      </p>
+                    </div>
+                  </div>
 
-                  <div className="flex-1 min-w-0 z-10">
-                    <div className="flex items-center gap-2.5 mb-0.5">
+                  <div className="flex-1 min-w-0 w-full z-10">
+                    <div className="hidden sm:flex items-center gap-2.5 mb-0.5">
                       <p className="text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
                         {account.displayName || account.email}
                       </p>
                       {account.isActive && (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/20 shadow-lg shadow-emerald-500/20">
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/20 shadow-lg shadow-emerald-500/20 shrink-0">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter">
                             Gateway Active
@@ -295,11 +305,24 @@ export default function GoogleDriveConnect() {
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 font-medium truncate mb-2">
+
+                    <div className="flex sm:hidden items-center gap-2 mb-3">
+                      {account.isActive && (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/20">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span className="text-[8px] font-black text-emerald-400 uppercase tracking-tighter">
+                            Active
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="hidden sm:block text-xs text-slate-500 font-medium truncate mb-2">
                       {account.email}
                     </p>
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1 text-[9px] font-black text-slate-400 bg-white/5 px-2 py-1 rounded-lg border border-white/5 uppercase tracking-widest">
+
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <span className="flex items-center gap-1 text-[9px] font-black text-slate-400 bg-white/5 px-2 py-1 rounded-lg border border-white/5 uppercase tracking-widest shrink-0">
                         <Database className="h-2.5 w-2.5" />
                         ID: {account.tenantId || "Default"}
                       </span>
@@ -308,7 +331,7 @@ export default function GoogleDriveConnect() {
                           href={`https://drive.google.com/drive/folders/${account.rootFolderId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[9px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-400/5 px-2 py-1 rounded-lg border border-indigo-400/10 uppercase tracking-widest transition-all hover:scale-105"
+                          className="flex items-center gap-1 text-[9px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-400/5 px-2 py-1 rounded-lg border border-indigo-400/10 uppercase tracking-widest transition-all hover:scale-105 shrink-0"
                         >
                           <ExternalLink className="h-2.5 w-2.5" />
                           Vault
@@ -317,7 +340,7 @@ export default function GoogleDriveConnect() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 z-10">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end sm:justify-start pt-3 sm:pt-0 border-t sm:border-0 border-white/5 shrink-0 z-10">
                     {!account.isActive && (
                       <button
                         onClick={() => handleSwitch(account.id)}

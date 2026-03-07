@@ -63,20 +63,20 @@ export default function FoldersPage() {
   }, [searchQuery]);
 
   return (
-    <div className="h-full flex flex-col gap-10">
+    <div className="h-full flex flex-col gap-6 md:gap-10">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pt-4">
-        <div className="space-y-4 flex-1">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-400">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-4">
+        <div className="space-y-3 md:space-y-4 flex-1">
+          <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-indigo-400">
             <Layers className="h-3 w-3" />
             <span>Workspace Architect</span>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-5xl font-bold tracking-tight text-white">
+          <div className="space-y-1 md:space-y-2">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white leading-tight">
               Collections
             </h1>
-            <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
+            <p className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
               Manage your high-fidelity product asset structures. Organize by
               campaign, category, or product line.
             </p>
@@ -86,7 +86,7 @@ export default function FoldersPage() {
         <div className="flex items-center gap-4 shrink-0">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 group"
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 md:py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 group"
           >
             <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
             New Collection
@@ -95,8 +95,8 @@ export default function FoldersPage() {
       </div>
 
       {/* Control Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-card/50 border border-border px-6 py-4 rounded-2xl">
-        <div className="relative w-full sm:w-80">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card/50 border border-border p-3 md:px-6 md:py-4 rounded-2xl">
+        <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <input
             placeholder="Search collections..."
@@ -106,9 +106,9 @@ export default function FoldersPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-indigo-600/10 text-indigo-400 rounded-xl px-3 py-2 border border-indigo-500/20">
+        <div className="flex items-center gap-2 bg-indigo-600/10 text-indigo-400 rounded-xl px-3 py-2 border border-indigo-500/20 self-end md:self-auto">
           <LayoutGrid className="h-4 w-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">
+          <span className="text-[10px] font-bold uppercase tracking-wider">
             Grid View
           </span>
         </div>

@@ -128,9 +128,9 @@ export default function Home() {
   return (
     <div className="space-y-10">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-2">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] md:text-xs font-bold border border-indigo-500/20">
             <Image
               src="/logo-v2.jpg"
               width={14}
@@ -140,10 +140,10 @@ export default function Home() {
             />
             <span>Premium Media Management</span>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight">
             Dashboard
           </h1>
-          <p className="text-slate-400 max-w-xl">
+          <p className="text-slate-400 text-sm md:text-base max-w-xl">
             Welcome back. Here&apos;s an overview of your digital assets and
             recent activity.
           </p>
@@ -152,7 +152,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 md:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Upload className="h-4 w-4" />
             <span>Upload Media</span>
@@ -161,7 +161,7 @@ export default function Home() {
       </div>
 
       {/* Stats Grid - Professional SaaS Design */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {[
           {
             label: "Total Assets",
@@ -169,7 +169,7 @@ export default function Home() {
             icon: Library,
             color: "text-indigo-400",
             bg: "bg-indigo-400/10",
-            trend: "+12% this week",
+            trend: "+12%",
           },
           {
             label: "Images",
@@ -177,7 +177,7 @@ export default function Home() {
             icon: ImageIcon,
             color: "text-emerald-400",
             bg: "bg-emerald-400/10",
-            trend: "+5% this week",
+            trend: "+5%",
           },
           {
             label: "Videos",
@@ -185,7 +185,7 @@ export default function Home() {
             icon: Film,
             color: "text-purple-400",
             bg: "bg-purple-400/10",
-            trend: "+2% this week",
+            trend: "+2%",
           },
           {
             label: "Collections",
@@ -193,34 +193,33 @@ export default function Home() {
             icon: FolderIcon,
             color: "text-amber-400",
             bg: "bg-amber-400/10",
-            trend: "0% this week",
+            trend: "0%",
           },
         ].map((stat, i) => (
           <div
             key={i}
-            className="group p-6 rounded-2xl bg-card border border-border hover:border-indigo-500/50 transition-all duration-300 shadow-sm hover:shadow-indigo-500/5"
+            className="group p-4 md:p-6 rounded-2xl bg-card border border-border hover:border-indigo-500/50 transition-all duration-300 shadow-sm hover:shadow-indigo-500/5"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
-                <stat.icon className="h-5 w-5" />
+            <div className="flex items-center justify-between mb-2 md:mb-4">
+              <div
+                className={`p-2 rounded-lg md:rounded-xl md:p-2.5 ${stat.bg} ${stat.color}`}
+              >
+                <stat.icon className="h-4 w-4 md:h-5 md:w-5" />
               </div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <span className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">
                 {stat.label}
               </span>
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <div className="text-3xl font-bold text-white mb-1">
+                <div className="text-xl md:text-3xl font-bold text-white mb-1">
                   {stat.value}
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
-                  <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                <div className="flex items-center gap-1 text-[9px] md:text-[11px] font-medium text-slate-400">
+                  <ArrowUpRight className="h-2.5 w-2.5 md:h-3 md:w-3 text-emerald-500" />
                   <span>{stat.trend}</span>
                 </div>
               </div>
-            </div>
-            <div className="mt-4 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-indigo-500 rounded-full w-2/3" />
             </div>
           </div>
         ))}
